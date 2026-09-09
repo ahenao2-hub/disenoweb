@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Prototipo simple - Realizar seguimiento y evaluación</title>
+    <style>
+        /* Paleta institucional UDI: azul oscuro + naranja + blanco (barra de navegación en blanco) */
+        body {
+            background-color: #FFFFFF;
+            color: #0B2C5E;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+        }
+
+        /* Contenedor del contenido principal */
+        main {
+            padding: 0 20px 20px 20px;
+        }
+
+        h2 {
+            color: #0B2C5E;
+            border-bottom: 3px solid #D97D42;
+            padding-bottom: 6px;
+        }
+
+        h3 {
+            color: #0B2C5E;
+        }
+
+        section {
+            margin-bottom: 20px;
+        }
+
+        /* Agrupadores de campos del formulario */
+        fieldset {
+            border: 2px solid #0B2C5E;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            padding: 12px;
+        }
+
+        legend {
+            background-color: #0B2C5E;
+            color: #FFFFFF;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Estilo general de tablas */
+        table {
+            border-color: #0B2C5E;
+            width: 100%;
+        }
+
+        th {
+            background-color: #0B2C5E;
+            color: #FFFFFF;
+            text-align: left;
+            padding: 6px;
+        }
+
+        td {
+            padding: 6px;
+        }
+
+        /* Botones de acción del formulario */
+        input[type="submit"] {
+            background-color: #D97D42;
+            color: #FFFFFF;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0B2C5E;
+        }
+
+        a {
+            color: #D97D42;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #D97D42;
+        }
+
+        /* Pie de página */
+        footer {
+            background-color: #0B2C5E;
+            color: #FFFFFF;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== CONTENIDO PRINCIPAL ===================== -->
+<main>
+
+<h2>Módulo de Seguimiento y Evaluación</h2>
+
+<!-- Selección del estudiante a evaluar (paso 1 y 2 resumidos) -->
+<section>
+    <h3>Estudiante a evaluar</h3>
+    <label for="estudiante">Seleccione un estudiante:</label><br>
+    <select id="estudiante" name="estudiante">
+        <option>Juan Pérez - Colegio San José</option>
+        <option>María Gómez - Fundación Renacer</option>
+        <option>Carlos Ruiz - Institución Educativa Norte</option>
+    </select>
+</section>
+
+<hr>
+
+<!-- Revisión de evidencias (pasos 3-5 resumidos) -->
+<section>
+    <h3>Revisión de evidencias</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+        <tr>
+            <th>Fecha</th>
+            <th>Actividad</th>
+            <th>Horas</th>
+            <th>Decisión</th>
+        </tr>
+        <tr>
+            <td>08/09/2026</td>
+            <td>Apoyo en aula</td>
+            <td>04:00</td>
+            <td>
+                <select name="decision_1">
+                    <option>Aprobar</option>
+                    <option>Rechazar</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>05/09/2026</td>
+            <td>Preparación de material</td>
+            <td>03:30</td>
+            <td>
+                <select name="decision_2">
+                    <option>Aprobar</option>
+                    <option>Rechazar</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <label for="observaciones_evidencias">Observaciones generales:</label><br>
+    <textarea id="observaciones_evidencias" name="observaciones_evidencias" rows="3" cols="60" placeholder="Escriba sus observaciones sobre las evidencias..."></textarea>
+</section>
+
+<hr>
+
+<!-- Registro de la visita de acompañamiento (pasos 7-9 resumidos) -->
+<section>
+    <h3>Visita de acompañamiento</h3>
+
+    <label for="fecha_visita">Fecha de la visita:</label><br>
+    <input type="date" id="fecha_visita" name="fecha_visita">
+    <br><br>
+
+    <label for="observaciones_visita">Observaciones de la visita:</label><br>
+    <textarea id="observaciones_visita" name="observaciones_visita" rows="3" cols="60" placeholder="Describa lo observado durante la visita..."></textarea>
+</section>
+
+<hr>
+
+<!-- Calificación por rúbrica (pasos 10-12 resumidos) -->
+<section>
+    <h3>Calificación por criterios</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+        <tr>
+            <th>Criterio</th>
+            <th>Calificación</th>
+        </tr>
+        <tr>
+            <td>Puntualidad y cumplimiento de horario</td>
+            <td>
+                <select name="criterio_1">
+                    <option>Excelente</option>
+                    <option>Bueno</option>
+                    <option>Aceptable</option>
+                    <option>Requiere mejora</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>Dominio de competencias pedagógicas</td>
+            <td>
+                <select name="criterio_2">
+                    <option>Excelente</option>
+                    <option>Bueno</option>
+                    <option>Aceptable</option>
+                    <option>Requiere mejora</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>Actitud y conducta profesional</td>
+            <td>
+                <select name="criterio_3">
+                    <option>Excelente</option>
+                    <option>Bueno</option>
+                    <option>Aceptable</option>
+                    <option>Requiere mejora</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+</section>
+
+<hr>
+
+<!-- Retroalimentación final y envío (pasos 13-16 resumidos) -->
+<section>
+    <h3>Retroalimentación y estado final</h3>
+
+    <label for="mensaje_retro">Mensaje de retroalimentación para el estudiante:</label><br>
+    <textarea id="mensaje_retro" name="mensaje_retro" rows="3" cols="60" placeholder="Escriba sugerencias de mejora..."></textarea>
+    <br><br>
+
+    <label for="estado_estudiante">Estado del estudiante:</label><br>
+    <select id="estado_estudiante" name="estado_estudiante">
+        <option>En seguimiento</option>
+        <option>Requiere atención</option>
+        <option>Desempeño satisfactorio</option>
+    </select>
+
+    <br><br>
+
+    <input type="submit" name="enviar_evaluacion" value="Enviar evaluación y retroalimentación">
+</section>
+
+</main>
+
+<hr>
+
+<!-- ===================== PIE DE PÁGINA ===================== -->
+<footer>
+</footer>
+
+</body>
+</html>
