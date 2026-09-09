@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Módulo de Evidencias - Gestionar evidencias y cumplimiento de horas</title>
+    <style>
+        /* Paleta institucional UDI: azul oscuro + naranja + blanco (barra de navegación en blanco) */
+        body {
+            background-color: #FFFFFF;
+            color: #0B2C5E;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+        }
+
+        /* Contenedor del contenido principal */
+        main {
+            padding: 0 20px 20px 20px;
+        }
+
+        h2 {
+            color: #0B2C5E;
+            border-bottom: 3px solid #D97D42;
+            padding-bottom: 6px;
+        }
+
+        h3 {
+            color: #0B2C5E;
+        }
+
+        section {
+            margin-bottom: 20px;
+        }
+
+        /* Agrupadores de campos del formulario */
+        fieldset {
+            border: 2px solid #0B2C5E;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            padding: 12px;
+        }
+
+        legend {
+            background-color: #0B2C5E;
+            color: #FFFFFF;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Estilo general de tablas (resumen, archivos, historial) */
+        table {
+            border-color: #0B2C5E;
+            width: 100%;
+        }
+
+        th {
+            background-color: #0B2C5E;
+            color: #FFFFFF;
+            text-align: left;
+            padding: 6px;
+        }
+
+        td {
+            padding: 6px;
+        }
+
+        caption {
+            color: #0B2C5E;
+            font-weight: bold;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        /* Botones de acción del formulario */
+        input[type="submit"] {
+            background-color: #D97D42;
+            color: #FFFFFF;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0B2C5E;
+        }
+
+        a {
+            color: #D97D42;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #D97D42;
+        }
+
+        /* Pie de página */
+        footer {
+            background-color: #0B2C5E;
+            color: #FFFFFF;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== CONTENIDO PRINCIPAL ===================== -->
+<main>
+
+<h2>Módulo de Evidencias — Nueva sesión de carga</h2>
+
+<!-- Bloque con la información general del estudiante y su avance de horas -->
+<section>
+    <h3>Resumen del estudiante</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+        <tr>
+            <th>Estudiante</th>
+            <td>Juan Pérez</td>
+            <th>Institución asignada</th>
+            <td>Colegio San José</td>
+        </tr>
+        <tr>
+            <th>Estado</th>
+            <td>Asignado</td>
+            <th>Horas acumuladas</th>
+            <td>32:00 de 80:00 horas</td>
+        </tr>
+    </table>
+</section>
+
+<hr>
+
+<!-- ===================== FORMULARIO DE CARGA (Pasos 1 a 11 de la secuencia base) ===================== -->
+<section>
+    <h3>Paso 1: Datos de la actividad</h3>
+    <form action="#" method="post">
+
+        <!-- Paso 3: selección de la actividad realizada (catálogo o actividad personalizada) -->
+        <fieldset>
+            <legend>Seleccione la actividad realizada</legend>
+
+            <label for="actividad">Actividad del catálogo:</label><br>
+            <select id="actividad" name="actividad" size="1">
+                <option>-- Seleccione una actividad --</option>
+                <option>Apoyo en aula - Refuerzo escolar</option>
+                <option>Preparación de material didáctico</option>
+                <option>Acompañamiento a estudiantes</option>
+                <option>Reunión con docente titular</option>
+                <option>Otra actividad</option>
+            </select>
+            <br><br>
+            <!-- Rama 3.a: actividad no encontrada en el catálogo -->
+            <em>Nota: si elige "Otra actividad", describa manualmente qué realizó en el campo de notas (más abajo). Quedará marcada como "Actividad personalizada" para revisión del docente.</em>
+        </fieldset>
+
+        <br>
+
+        <!-- Paso 4: registro de horas trabajadas en formato HH:MM -->
+        <fieldset>
+            <legend>Horas trabajadas</legend>
+            <label for="horas">Cantidad de horas (formato HH:MM):</label><br>
+            <input type="text" id="horas" name="horas" placeholder="Ej: 04:30" size="10">
+            <br><br>
+            <label for="fecha">Fecha de la práctica:</label><br>
+            <input type="date" id="fecha" name="fecha">
+        </fieldset>
+
+        <br>
+
+        <!-- Paso 5: descripción o narrativa de la actividad -->
+        <fieldset>
+            <legend>Descripción de la actividad</legend>
+            <label for="descripcion">Describa qué hizo durante esas horas:</label><br>
+            <textarea id="descripcion" name="descripcion" rows="4" cols="60" placeholder="Escriba aquí la narrativa de la actividad realizada..."></textarea>
+        </fieldset>
+
+        <br>
+
+        <!-- Pasos 7 y 8: validación automática de formato y tamaño de cada archivo -->
+        <fieldset>
+            <legend>Evidencias (archivos de soporte)</legend>
+
+            <label for="archivo1">Adjuntar archivo(s):</label><br>
+            <input type="file" id="archivo1" name="archivo1" multiple>
+
+            <br><br>
+            <p><small>Formatos permitidos: PDF, JPG, PNG, DOCX &nbsp;|&nbsp; Tamaño máximo por archivo: 5 MB</small></p>
+        </fieldset>
+
+        <br>
+
+        <!-- Rama 10.b: campo de notas para el docente -->
+        <fieldset>
+            <legend>Opciones adicionales</legend>
+            <label for="notas">Notas para el docente (opcional):</label><br>
+            <textarea id="notas" name="notas" rows="3" cols="60" placeholder="Comentarios adicionales que el docente verá al revisar..."></textarea>
+        </fieldset>
+
+        <br>
+
+        <!-- Rama 10.a: guardar como borrador / Paso 11: confirmar y enviar -->
+        <p>
+            <input type="submit" name="borrador" value="Guardar como borrador">
+            &nbsp;
+            <input type="submit" name="revisar" value="Revisar antes de enviar">
+            &nbsp;
+            <input type="submit" name="enviar" value="Confirmar y enviar">
+        </p>
+
+    </form>
+</section>
+
+</main>
+
+<hr>
+
+<!-- ===================== PIE DE PÁGINA ===================== -->
+<footer>
+</footer>
+
+</body>
+</html>
