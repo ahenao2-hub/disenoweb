@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIGPRA - Prototipo de mediana fidelidad</title>
+  <style>
+    :root { --ink: #1f2937; --muted: #667085; --line: #d0d5dd; --paper: #f7f8fa; --blue: #2457a6; --blue-soft: #e8f0ff; --green: #157347; --amber: #a15c00; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font: 15px/1.45 Georgia, serif; }
+    button, input, select, textarea { font: inherit; }
+    .shell { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
+    aside { background: #fff; border-right: 1px solid var(--line); padding: 24px 16px; }
+    .brand { border-bottom: 1px solid var(--line); padding: 0 10px 20px; }
+    .brand strong { display: block; font-size: 23px; letter-spacing: 1px; color: var(--blue); }
+    .brand span { color: var(--muted); font-size: 12px; }
+    .role-switch { margin-top: 16px; padding: 0 10px; }
+    .role-switch label { color: var(--muted); display: block; font-size: 11px; margin-bottom: 5px; text-transform: uppercase; }
+    .role-switch select { border: 1px solid var(--line); border-radius: 4px; color: var(--ink); padding: 8px; width: 100%; }
+    nav { display: grid; gap: 5px; margin-top: 22px; }
+    nav button { border: 0; background: transparent; border-radius: 4px; color: var(--ink); cursor: pointer; padding: 11px 10px; text-align: left; }
+    nav button:hover, nav button.active { background: var(--blue-soft); color: var(--blue); }
+    main { max-width: 1180px; padding: 30px 36px; width: 100%; }
+    header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 28px; }
+    h1, h2, h3 { margin: 0 0 8px; font-weight: 600; }
+    h1 { font-size: 27px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+    .eyebrow { color: var(--muted); font-size: 13px; margin: 0; }
+    .user { align-items: center; display: flex; gap: 10px; }
+    .avatar { align-items: center; background: var(--blue); border-radius: 50%; color: #fff; display: flex; height: 34px; justify-content: center; width: 34px; }
+    .grid { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 20px; }
+    .wide { grid-column: span 2; }
+    .metric { font-size: 30px; margin: 10px 0 0; }
+    .status { color: var(--green); font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 12px; width: 100%; }
+    th, td { border-bottom: 1px solid #eaecf0; padding: 12px 8px; text-align: left; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .tag { background: var(--blue-soft); border-radius: 12px; color: var(--blue); display: inline-block; font-size: 12px; padding: 3px 9px; }
+    .tag.pending { background: #fff4e5; color: var(--amber); }
+    .tag.off { background: #f2f4f7; color: var(--muted); }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .primary, .secondary { border: 1px solid var(--blue); border-radius: 4px; cursor: pointer; padding: 9px 14px; }
+    .primary { background: var(--blue); color: #fff; }
+    .secondary { background: #fff; color: var(--blue); }
+    .screen { display: none; }
+    .screen.visible { display: block; }
+    form { display: grid; gap: 14px; max-width: 720px; }
+    form.wide-form { max-width: none; }
+    label { color: var(--muted); display: grid; font-size: 13px; gap: 6px; }
+    input, select, textarea { border: 1px solid var(--line); border-radius: 4px; color: var(--ink); padding: 10px; }
+    textarea { min-height: 90px; resize: vertical; }
+    .fields-2 { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+    .stack { display: grid; gap: 18px; }
+    .notice { background: var(--blue-soft); border: 1px solid var(--blue); border-radius: 6px; color: var(--ink); font-size: 13px; margin-top: 10px; padding: 12px 14px; }
+    .notice.warning { background: #fff4e5; border-color: var(--amber); }
+    .notice strong { color: inherit; }
+    hr.sep { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } aside { border-bottom: 1px solid var(--line); border-right: 0; padding: 14px; } nav { display: flex; overflow-x: auto; } nav button { white-space: nowrap; } main { padding: 22px 16px; } .grid { grid-template-columns: 1fr; } .wide { grid-column: auto; } .fields-2 { grid-template-columns: 1fr; } header { align-items: flex-start; gap: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand"><strong>SIGPRA</strong><span>Gestion de practicas academicas</span></div>
+
+      <div class="role-switch">
+        <label for="roleSwitch">Ver como</label>
+        <select id="roleSwitch">
+          <option value="coordinador">Coordinador de Practicas</option>
+          <option value="estudiante">Estudiante</option>
+          <option value="docente">Docente Asesor</option>
+          <option value="director">Director del programa</option>
+        </select>
+      </div>
+
+      <nav id="mainNav" aria-label="Navegacion principal"></nav>
+    </aside>
+    <main>
+      <header>
+        <div><p class="eyebrow" id="roleLabel">Panel de coordinacion</p><h1 id="title">Resumen</h1></div>
+        <div class="user"><span id="userName">Andres Rojas</span><span class="avatar" id="userAvatar">AR</span></div>
+      </header>
+
+      <!-- ===================================================== -->
+      <!-- ROL: COORDINADOR DE PRACTICAS                          -->
+      <!-- ===================================================== -->
+
+      <!-- Inicio del coordinador -->
+      <section class="screen" id="inicio-coordinador">
+        <div class="grid">
+          <article class="panel"><p class="eyebrow">Periodos publicados</p><p class="metric">3</p><span class="status">2026-2 activo</span></article>
+          <article class="panel"><p class="eyebrow">Convenios vigentes</p><p class="metric">12</p><span class="status">2 por vencer este mes</span></article>
+          <article class="panel"><p class="eyebrow">Asignaciones pendientes</p><p class="metric">5</p><span class="tag pending">Estudiantes por asignar</span></article>
+          <article class="panel wide"><h2>Periodo activo</h2><table><tr><th>Programa</th><th>Nivel</th><th>Vigencia</th><th>Estado</th></tr><tr><td>Ingenieria de Sistemas</td><td>Practica II</td><td>01/08/2026 - 15/12/2026</td><td><span class="tag">Publicado</span></td></tr></table></article>
+          <article class="panel"><h2>Acciones</h2><p class="eyebrow">Continua la gestion del periodo.</p><div class="actions"><button class="primary" data-screen="asignaciones">Asignar practicantes</button></div></article>
+        </div>
+      </section>
+
+      <!-- CU-01: Programar periodo de practica -->
+      <section class="screen" id="periodos">
+        <div class="stack">
+          <div class="panel">
+            <h2>Paso 1-2: Programa y configuracion previa</h2>
+            <div class="fields-2">
+              <label>Programa academico
+                <select>
+                  <option>Ingenieria de Sistemas</option>
+                  <option>Licenciatura en Pedagogia</option>
+                </select>
+              </label>
+              <label>Nivel de practica
+                <select>
+                  <option>Practica I</option>
+                  <option>Practica II</option>
+                </select>
+              </label>
+            </div>
+            <div class="notice"><strong>Ultimo periodo registrado para este programa:</strong> 2026-1, 120 horas minimas, reporte hasta el 30/06/2026. El sistema precarga estos valores como referencia.</div>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 3: Fechas e intensidad horaria</h2>
+            <form class="wide-form" onsubmit="return handleAction(event,'Periodo publicado y notificado a estudiantes y docentes asesores.','periodos')">
+              <div class="fields-2">
+                <label>Fecha de inicio<input type="date" required></label>
+                <label>Fecha de fin<input type="date" required></label>
+                <label>Intensidad horaria minima<input type="number" min="1" placeholder="Ej. 120" required></label>
+                <label>Fecha limite de reporte<input type="date" required></label>
+              </div>
+
+              <h3>Paso 4: Criterios de evaluacion y pesos</h3>
+              <table>
+                <tr><th>Criterio</th><th>Peso (%)</th></tr>
+                <tr><td><input type="text" value="Cumplimiento de horas"></td><td><input type="number" value="40"></td></tr>
+                <tr><td><input type="text" value="Validacion de actividades"></td><td><input type="number" value="30"></td></tr>
+                <tr><td><input type="text" value="Visita de acompanamiento"></td><td><input type="number" value="30"></td></tr>
+              </table>
+              <p class="eyebrow">Total de pesos: 100%</p>
+
+              <div class="notice warning"><strong>Paso 5 / Excepcion 5a:</strong> el sistema bloquea la publicacion si la intensidad horaria es inferior al minimo reglamentario o si los pesos no suman el 100%. En ese caso muestra el valor esperado o el campo a corregir.</div>
+
+              <div class="actions">
+                <button class="secondary" type="button" onclick="alert('Periodo guardado como borrador. No se ha publicado ni notificado todavia (Rama 3a).')">Guardar como borrador</button>
+                <button class="primary" type="submit">Publicar periodo</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h2>Periodos registrados</h2>
+            <table>
+              <tr><th>Programa</th><th>Nivel</th><th>Vigencia</th><th>Estado</th></tr>
+              <tr><td>Ingenieria de Sistemas</td><td>Practica II</td><td>01/08/2026 - 15/12/2026</td><td><span class="tag">Publicado</span></td></tr>
+              <tr><td>Licenciatura en Pedagogia</td><td>Practica I</td><td>01/08/2026 - 15/12/2026</td><td><span class="tag pending">En configuracion</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CU-02: Gestionar convenios y plazas -->
+      <section class="screen" id="convenios">
+        <div class="stack">
+          <div class="panel">
+            <h2>Paso 1: Institucion receptora</h2>
+            <div class="fields-2">
+              <label>Institucion receptora
+                <select>
+                  <option>Colegio San Jose</option>
+                  <option>Fundacion Renacer</option>
+                  <option>Registrar nueva institucion...</option>
+                </select>
+              </label>
+              <label>Contacto institucional<input type="text" placeholder="Nombre y correo"></label>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 2: Convenio</h2>
+            <form class="wide-form" onsubmit="return handleAction(event,'Convenio y plazas registrados. Las plazas quedan disponibles para asignacion.','convenios')">
+              <div class="fields-2">
+                <label>Numero de convenio<input type="text" placeholder="Ej. CONV-2026-014" required></label>
+                <label>Documento del convenio<input type="file" required></label>
+                <label>Vigencia desde<input type="date" required></label>
+                <label>Vigencia hasta<input type="date" required></label>
+              </div>
+
+              <div class="notice warning"><strong>Paso 4 / Excepcion 4a:</strong> si el convenio esta vencido o no cuenta con documento suscrito, el sistema lo deja en estado inactivo y no habilita las plazas asociadas.</div>
+
+              <h3>Paso 3: Plazas ofrecidas</h3>
+              <table>
+                <tr><th>Nivel educativo</th><th>Jornada</th><th>Cupos</th><th>Docente titular</th></tr>
+                <tr><td><input type="text" value="Primaria"></td><td><input type="text" value="Manana"></td><td><input type="number" value="2"></td><td><input type="text" value="Ana Martinez"></td></tr>
+              </table>
+              <div class="notice"><strong>Rama 3a:</strong> si modifica los cupos de una plaza ya utilizada, el nuevo total no puede ser inferior a los cupos ya ocupados.</div>
+
+              <div class="actions">
+                <button class="primary" type="submit">Guardar convenio y plazas</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h2>Convenios y plazas registrados</h2>
+            <table>
+              <tr><th>Institucion</th><th>Convenio</th><th>Vigencia</th><th>Cupos (ocupados/total)</th><th>Estado</th></tr>
+              <tr><td>Colegio San Jose</td><td>CONV-2026-014</td><td>hasta 15/12/2026</td><td>1 / 2</td><td><span class="tag">Vigente</span></td></tr>
+              <tr><td>Institucion Educativa Norte</td><td>CONV-2024-005</td><td>vencio 30/06/2026</td><td>0 / 3</td><td><span class="tag off">Inactivo</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CU-03: Asignar practicante a plaza y docente asesor -->
+      <section class="screen" id="asignaciones">
+        <div class="stack">
+          <div class="panel">
+            <h2>Paso 1-3: Estudiantes habilitados</h2>
+            <table>
+              <tr><th></th><th>Estudiante</th><th>Programa</th><th>Periodo</th></tr>
+              <tr><td><input type="radio" name="estSel" checked></td><td>Juan Perez</td><td>Ingenieria de Sistemas</td><td>2026-2</td></tr>
+              <tr><td><input type="radio" name="estSel"></td><td>Maria Gomez</td><td>Licenciatura en Pedagogia</td><td>2026-2</td></tr>
+            </table>
+            <div class="notice warning"><strong>Excepcion 8a:</strong> Juan Perez ya tiene una asignacion activa en este periodo (Colegio San Jose, docente Ana Torres). El sistema bloquea una nueva asignacion salvo que se elija reasignar.</div>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 4-5: Plazas disponibles</h2>
+            <table>
+              <tr><th></th><th>Institucion</th><th>Plaza</th><th>Convenio</th><th>Cupos</th></tr>
+              <tr><td><input type="radio" name="plazaSel" checked></td><td>Colegio San Jose</td><td>Apoyo pedagogico - Primaria</td><td>Vigente</td><td>1</td></tr>
+              <tr><td><input type="radio" name="plazaSel" disabled></td><td>Institucion Educativa Norte</td><td>Apoyo administrativo</td><td>Vencido</td><td>0</td></tr>
+            </table>
+            <div class="notice warning"><strong>Excepcion 9a:</strong> si la plaza no tiene cupos o el convenio no esta vigente, el sistema bloquea la asignacion e informa la causa.</div>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 6-7: Docente asesor</h2>
+            <label>Seleccione el docente asesor
+              <select>
+                <option>Ana Torres - 3 estudiantes asignados</option>
+                <option>Laura Gomez - 2 estudiantes asignados</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="panel">
+            <h2>Rama 5a: Reasignacion</h2>
+            <label><input type="checkbox" style="width:auto;display:inline-block;margin-right:8px;">Este estudiante requiere reasignacion (nueva plaza o docente asesor)</label>
+            <div class="notice">Al confirmar, el sistema conserva el historial de la asignacion anterior y registra la nueva asignacion.</div>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 10-12: Confirmar asignacion</h2>
+            <table>
+              <tr><th>Estudiante</th><td>Juan Perez</td></tr>
+              <tr><th>Plaza / Institucion</th><td>Apoyo pedagogico - Colegio San Jose</td></tr>
+              <tr><th>Docente asesor</th><td>Ana Torres</td></tr>
+              <tr><th>Periodo</th><td>2026-2</td></tr>
+            </table>
+            <p class="eyebrow">Al confirmar, el sistema registra la asignacion, actualiza el cupo ocupado y notifica al estudiante, al docente asesor y a la institucion receptora.</p>
+            <div class="actions"><button class="primary" onclick="alert('Asignacion registrada y notificada al estudiante, al docente asesor y a la institucion receptora.')">Confirmar asignacion</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- ROL: ESTUDIANTE                                        -->
+      <!-- ===================================================== -->
+
+      <section class="screen" id="inicio-estudiante">
+        <div class="grid">
+          <article class="panel"><p class="eyebrow">Horas aprobadas</p><p class="metric">72 / 120</p><span class="status">60% de avance</span></article>
+          <article class="panel"><p class="eyebrow">Bitacoras pendientes</p><p class="metric">2</p><span class="status">Requieren seguimiento</span></article>
+          <article class="panel"><p class="eyebrow">Estado</p><p class="metric">En curso</p><span class="tag">Practica activa</span></article>
+          <article class="panel wide"><h2>Practica actual</h2><table><tr><th>Entidad receptora</th><th>Docente asesor</th><th>Periodo</th></tr><tr><td>Institucion Educativa Central</td><td>Laura Gomez</td><td>2026-2</td></tr></table></article>
+          <article class="panel"><h2>Acciones</h2><p class="eyebrow">Continua el registro de tu experiencia.</p><div class="actions"><button class="primary" data-screen="bitacora">Registrar actividad</button></div></article>
+        </div>
+      </section>
+
+      <!-- CU-04: Registrar actividad ejecutada y soportes -->
+      <section class="screen" id="bitacora">
+        <div class="panel">
+          <h2>Nueva bitacora (CU-04)</h2>
+          <p class="eyebrow">Paso 2: asignacion activa - Institucion Educativa Central, periodo 2026-2.</p>
+          <form onsubmit="return handleAction(event,'Actividad guardada y enviada a validacion del docente asesor.','validaciones')">
+            <label>Fecha de la actividad<input type="date" required></label>
+            <label>Tipo de actividad
+              <select>
+                <option>Planeacion de clase</option>
+                <option>Refuerzo pedagogico</option>
+                <option>Reunion con docente titular</option>
+              </select>
+            </label>
+            <label>Horas ejecutadas<input type="number" min="0.5" max="24" step="0.5" required></label>
+            <label>Descripcion<textarea placeholder="Describe lo realizado y los resultados obtenidos" required></textarea></label>
+            <label>Soportes o evidencias<input type="file" multiple></label>
+
+            <div class="notice warning"><strong>Excepcion 4b:</strong> si el archivo tiene un formato no permitido o excede el tamano maximo, el sistema lo rechaza y solicita cargar un soporte valido.</div>
+            <div class="notice warning"><strong>Excepcion 5a:</strong> si faltan campos obligatorios o soportes requeridos, el sistema bloquea el envio e indica que falta.</div>
+            <div class="notice warning"><strong>Excepcion 6a:</strong> si las horas reportadas superan el limite permitido o estan fuera del periodo vigente, el sistema rechaza el registro y muestra el motivo.</div>
+
+            <div class="actions">
+              <button class="secondary" type="button" onclick="alert('Bitacora guardada como borrador (Rama 4a). Puedes completarla o modificarla mas tarde.')">Guardar como borrador</button>
+              <button class="primary" type="submit">Enviar a validacion</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <h3>Rama 8a: correccion de actividad devuelta</h3>
+          <div class="notice">Observacion del docente: "La descripcion no detalla los resultados obtenidos, por favor ampliar." Ajusta la informacion o carga nuevos soportes y vuelve a enviar; el registro quedara nuevamente pendiente de validacion.</div>
+        </div>
+      </section>
+
+      <section class="screen" id="evidencias">
+        <div class="panel">
+          <h2>Evidencias</h2>
+          <p class="eyebrow">Archivos asociados a tus actividades.</p>
+          <table>
+            <tr><th>Archivo</th><th>Bitacora</th><th>Estado</th><th>Accion</th></tr>
+            <tr><td>planeacion_semana_01.pdf</td><td>12/08/2026</td><td><span class="tag">Disponible</span></td><td><button class="secondary">Consultar</button></td></tr>
+            <tr><td>registro_clase.jpg</td><td>19/08/2026</td><td><span class="tag">Disponible</span></td><td><button class="secondary">Consultar</button></td></tr>
+          </table>
+          <div class="actions"><button class="primary">Cargar evidencia</button></div>
+        </div>
+      </section>
+
+      <section class="screen" id="validaciones">
+        <div class="panel">
+          <h2>Estado de validaciones</h2>
+          <table>
+            <tr><th>Actividad</th><th>Fecha</th><th>Resultado</th><th>Observacion</th></tr>
+            <tr><td>Planeacion de clase</td><td>12/08/2026</td><td><span class="tag">Aprobada</span></td><td>Buen nivel de detalle.</td></tr>
+            <tr><td>Refuerzo pedagogico</td><td>19/08/2026</td><td><span class="tag pending">Pendiente</span></td><td>En revision del docente.</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <section class="screen" id="reportes">
+        <div class="panel">
+          <h2>Reporte de avance</h2>
+          <p class="eyebrow">Resumen consultable por periodo. Solo se contabilizan las horas aprobadas por el docente asesor.</p>
+          <table>
+            <tr><th>Periodo</th><th>Horas requeridas</th><th>Horas aprobadas</th><th>Avance</th></tr>
+            <tr><td>2026-2</td><td>120</td><td>72</td><td>60%</td></tr>
+          </table>
+          <div class="actions"><button class="secondary">Exportar reporte</button></div>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- ROL: DOCENTE ASESOR                                    -->
+      <!-- ===================================================== -->
+
+      <section class="screen" id="inicio-docente">
+        <div class="grid">
+          <article class="panel"><p class="eyebrow">Estudiantes asignados</p><p class="metric">6</p><span class="status">Periodo 2026-2</span></article>
+          <article class="panel"><p class="eyebrow">Actividades pendientes</p><p class="metric">4</p><span class="tag pending">Por validar</span></article>
+          <article class="panel"><p class="eyebrow">Visitas realizadas</p><p class="metric">3 / 6</p><span class="status">Meta minima del periodo</span></article>
+          <article class="panel"><h2>Acciones</h2><p class="eyebrow">Continua tu labor de seguimiento.</p><div class="actions"><button class="primary" data-screen="validar">Validar actividades</button><button class="secondary" data-screen="visitas">Registrar visita</button></div></article>
+        </div>
+      </section>
+
+      <!-- CU-05: Validar actividades reportadas -->
+      <section class="screen" id="validar">
+        <div class="stack">
+          <div class="panel">
+            <h2>Paso 1-2: Actividades pendientes</h2>
+            <table>
+              <tr><th></th><th>Estudiante</th><th>Actividad</th><th>Fecha</th><th>Horas</th></tr>
+              <tr><td><input type="radio" name="actSel" checked></td><td>Juan Perez</td><td>Refuerzo pedagogico</td><td>19/08/2026</td><td>3.5</td></tr>
+              <tr><td><input type="radio" name="actSel"></td><td>Maria Gomez</td><td>Planeacion de clase</td><td>21/08/2026</td><td>2.0</td></tr>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 3-5: Detalle de la actividad</h2>
+            <p class="eyebrow"><strong>Descripcion:</strong> Sesion de refuerzo en matematicas con estudiantes de quinto grado.</p>
+            <table>
+              <tr><th>Soporte</th><th>Accion</th></tr>
+              <tr><td>diario_campo_19ago.pdf</td><td><button class="secondary">Consultar</button></td></tr>
+            </table>
+            <div class="notice warning"><strong>Excepcion 5a:</strong> si los soportes no se pueden abrir o estan incompletos, el docente puede devolver la actividad con observacion solicitando nuevos soportes.</div>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 6: Decision</h2>
+            <form onsubmit="return handleAction(event,'Decision registrada. El estudiante fue notificado del resultado.','inicio-docente')">
+              <label><input type="checkbox" required style="width:auto;display:inline-block;margin-right:8px;">He revisado los soportes obligatorios de esta actividad</label>
+              <div class="notice warning"><strong>Excepcion (Paso 6):</strong> el sistema bloquea la aprobacion si se intenta aprobar sin marcar los soportes obligatorios como revisados.</div>
+
+              <label>Decision
+                <select>
+                  <option>Aprobar</option>
+                  <option>Devolver para correccion (Rama 6a)</option>
+                  <option>Rechazar (Rama 6b)</option>
+                </select>
+              </label>
+              <label>Observacion / justificacion<textarea placeholder="Requerido si se devuelve o se rechaza la actividad"></textarea></label>
+              <div class="actions"><button class="primary" type="submit">Confirmar decision</button></div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- CU-06: Realizar visita de acompanamiento y evaluar -->
+      <section class="screen" id="visitas">
+        <div class="stack">
+          <div class="panel">
+            <h2>Paso 2-4: Estudiante a evaluar</h2>
+            <label>Seleccione el estudiante
+              <select>
+                <option>Juan Perez - Colegio San Jose</option>
+                <option>Maria Gomez - Fundacion Renacer</option>
+              </select>
+            </label>
+            <table>
+              <tr><th>Institucion receptora</th><td>Colegio San Jose</td></tr>
+              <tr><th>Actividades reportadas</th><td>5</td></tr>
+              <tr><th>Evidencias disponibles</th><td>4</td></tr>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 5: Registro de la visita</h2>
+            <div class="fields-2">
+              <label>Fecha de la visita<input type="date"></label>
+              <label>Modalidad
+                <select id="modalidadVisita" onchange="toggleSoporteRemoto(this.value)">
+                  <option value="presencial">Presencial</option>
+                  <option value="remota">Remota</option>
+                </select>
+              </label>
+            </div>
+            <label>Observaciones de la visita<textarea placeholder="Desempeno, habilidades, conducta profesional, cumplimiento de horario"></textarea></label>
+
+            <div id="soporteRemoto" style="display:none;">
+              <div class="notice"><strong>Rama 6a - Visita remota:</strong> adjunte el soporte correspondiente (acta, captura de pantalla o enlace de la reunion).</div>
+              <label>Soporte de la visita remota<input type="file"></label>
+            </div>
+
+            <label><input type="checkbox" style="width:auto;display:inline-block;margin-right:8px;" onclick="alert('Inasistencia registrada. El sistema notificara al coordinador de practicas y permitira reprogramar la visita (Rama 5a).')">El estudiante no asistio a la visita programada</label>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 6-8: Rubrica de evaluacion</h2>
+            <div class="notice warning"><strong>Excepcion:</strong> si no existe rubrica configurada para el periodo o nivel de practica, el sistema bloquea el registro de la evaluacion e informa que debe configurarse primero.</div>
+            <table>
+              <tr><th>Criterio</th><th>Puntaje</th><th>Comentario</th></tr>
+              <tr><td>Puntualidad y cumplimiento de horario</td><td>
+                <select><option>Excelente</option><option>Bueno</option><option>Aceptable</option><option>Requiere mejora</option></select>
+              </td><td><input type="text" placeholder="Comentario"></td></tr>
+              <tr><td>Dominio de competencias pedagogicas</td><td>
+                <select><option>Excelente</option><option>Bueno</option><option selected>Aceptable</option><option>Requiere mejora</option></select>
+              </td><td><input type="text" placeholder="Comentario"></td></tr>
+              <tr><td>Actitud y conducta profesional</td><td>
+                <select><option>Excelente</option><option>Bueno</option><option>Aceptable</option><option>Requiere mejora</option></select>
+              </td><td><input type="text" placeholder="Comentario"></td></tr>
+            </table>
+            <p class="eyebrow"><strong>Paso 8:</strong> concepto final calculado por el sistema segun la rubrica: <strong>Bueno</strong></p>
+            <div class="notice warning"><strong>Excepcion 9a:</strong> si faltan criterios obligatorios por calificar, el sistema impide guardar la evaluacion hasta completarlos.</div>
+          </div>
+
+          <div class="panel">
+            <div class="actions"><button class="primary" onclick="alert('Visita y evaluacion guardadas. El estudiante fue notificado del resultado y las observaciones registradas.')">Confirmar evaluacion</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- ROL: DIRECTOR DEL PROGRAMA                             -->
+      <!-- ===================================================== -->
+
+      <section class="screen" id="inicio-director">
+        <div class="grid">
+          <article class="panel"><p class="eyebrow">Programas activos</p><p class="metric">2</p><span class="status">Periodo 2026-2</span></article>
+          <article class="panel"><p class="eyebrow">Estudiantes en practica</p><p class="metric">48</p><span class="status">6 docentes asesores</span></article>
+          <article class="panel"><p class="eyebrow">Avance promedio</p><p class="metric">58%</p><span class="tag">Sobre horas requeridas</span></article>
+          <article class="panel wide"><h2>Acciones</h2><p class="eyebrow">Revisa el estado consolidado del periodo.</p><div class="actions"><button class="primary" data-screen="consolidado">Ver consolidado de practicas</button></div></article>
+        </div>
+      </section>
+
+      <!-- CU-07: Consultar estado consolidado de practicas (Coordinador y Director) -->
+      <section class="screen" id="consolidado">
+        <div class="stack">
+          <div class="panel">
+            <h2>Paso 2-4: Periodo y filtros</h2>
+            <div class="fields-2">
+              <label>Periodo academico
+                <select>
+                  <option>2026-2</option>
+                  <option>2026-1</option>
+                </select>
+              </label>
+              <label>Programa
+                <select>
+                  <option>Todos</option>
+                  <option>Ingenieria de Sistemas</option>
+                  <option>Licenciatura en Pedagogia</option>
+                </select>
+              </label>
+              <label>Institucion receptora
+                <select>
+                  <option>Todas</option>
+                  <option>Colegio San Jose</option>
+                  <option>Fundacion Renacer</option>
+                </select>
+              </label>
+              <label>Docente asesor
+                <select>
+                  <option>Todos</option>
+                  <option>Ana Torres</option>
+                  <option>Laura Gomez</option>
+                </select>
+              </label>
+            </div>
+            <div class="notice"><strong>Rama 4a:</strong> si no se aplican filtros adicionales, el sistema genera el consolidado completo del periodo seleccionado.</div>
+            <div class="actions"><button class="secondary" onclick="alert('Filtros aplicados. Consolidado actualizado.')">Aplicar filtros</button></div>
+          </div>
+
+          <div class="panel">
+            <div class="notice warning"><strong>Excepcion 5a:</strong> si no existe informacion registrada para los filtros seleccionados, el sistema informa que no hay datos disponibles y no genera el consolidado.</div>
+            <div class="notice warning"><strong>Excepcion 6a:</strong> si existen actividades pendientes de validacion, el consolidado se muestra como informacion parcial e indica cuantos registros estan pendientes.</div>
+          </div>
+
+          <div class="grid">
+            <article class="panel"><p class="eyebrow">Horas aprobadas</p><p class="metric">2,340</p><span class="status">de 4,000 requeridas</span></article>
+            <article class="panel"><p class="eyebrow">Actividades validadas</p><p class="metric">210</p><span class="tag pending">18 pendientes</span></article>
+            <article class="panel"><p class="eyebrow">Visitas realizadas</p><p class="metric">32</p><span class="status">de 48 minimas</span></article>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 7: Consolidado por institucion</h2>
+            <table>
+              <tr><th>Institucion</th><th>Estudiantes</th><th>Horas aprobadas</th><th>Avance</th></tr>
+              <tr><td>Colegio San Jose</td><td>14</td><td>820</td><td>62%</td></tr>
+              <tr><td>Fundacion Renacer</td><td>9</td><td>510</td><td>55%</td></tr>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h2>Paso 9-10: Exportar</h2>
+            <p class="eyebrow">Rama 9a: el sistema genera el archivo en el formato disponible (PDF o Excel) y lo deja disponible para descarga. La consulta o generacion queda registrada con fecha, usuario y filtros aplicados.</p>
+            <div class="actions"><button class="primary" onclick="alert('Reporte exportado y consulta registrada en auditoria.')">Exportar reporte (PDF/Excel)</button></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const roles = {
+      coordinador: { user: 'Andres Rojas', avatar: 'AR', label: 'Panel de coordinacion',
+        nav: [
+          { id: 'inicio-coordinador', label: 'Inicio' },
+          { id: 'periodos', label: 'Periodos de practica' },
+          { id: 'convenios', label: 'Convenios y plazas' },
+          { id: 'asignaciones', label: 'Asignaciones' },
+          { id: 'consolidado', label: 'Consolidado' }
+        ], home: 'inicio-coordinador' },
+      estudiante: { user: 'Maria Perez', avatar: 'MP', label: 'Panel de estudiante',
+        nav: [
+          { id: 'inicio-estudiante', label: 'Inicio' },
+          { id: 'bitacora', label: 'Mi bitacora' },
+          { id: 'evidencias', label: 'Evidencias' },
+          { id: 'validaciones', label: 'Validaciones' },
+          { id: 'reportes', label: 'Reportes' }
+        ], home: 'inicio-estudiante' },
+      docente: { user: 'Laura Gomez', avatar: 'LG', label: 'Panel de docente asesor',
+        nav: [
+          { id: 'inicio-docente', label: 'Inicio' },
+          { id: 'validar', label: 'Validar actividades' },
+          { id: 'visitas', label: 'Visitas y evaluacion' }
+        ], home: 'inicio-docente' },
+      director: { user: 'Carlos Medina', avatar: 'CM', label: 'Panel de direccion',
+        nav: [
+          { id: 'inicio-director', label: 'Inicio' },
+          { id: 'consolidado', label: 'Consolidado' }
+        ], home: 'inicio-director' }
+    };
+
+    const titles = {
+      'inicio-coordinador': 'Resumen de coordinacion',
+      'periodos': 'CU-01 Programar periodo de practica',
+      'convenios': 'CU-02 Gestionar convenios y plazas',
+      'asignaciones': 'CU-03 Asignar practicante a plaza y docente asesor',
+      'consolidado': 'CU-07 Consultar estado consolidado de practicas',
+      'inicio-estudiante': 'Resumen de practica',
+      'bitacora': 'Mi bitacora',
+      'evidencias': 'Evidencias',
+      'validaciones': 'Validaciones',
+      'reportes': 'Reportes',
+      'inicio-docente': 'Resumen de docente asesor',
+      'validar': 'CU-05 Validar actividades reportadas',
+      'visitas': 'CU-06 Realizar visita de acompanamiento y evaluar',
+      'inicio-director': 'Resumen de direccion'
+    };
+
+    let currentRole = 'coordinador';
+
+    function renderNav(roleKey) {
+      const nav = document.querySelector('#mainNav');
+      nav.innerHTML = '';
+      roles[roleKey].nav.forEach((item) => {
+        const btn = document.createElement('button');
+        btn.textContent = item.label;
+        btn.dataset.screen = item.id;
+        btn.addEventListener('click', () => showScreen(item.id));
+        nav.appendChild(btn);
+      });
+    }
+
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach((screen) => screen.classList.toggle('visible', screen.id === name));
+      document.querySelectorAll('[data-screen]').forEach((el) => el.classList.toggle('active', el.dataset.screen === name));
+      document.querySelector('#title').textContent = titles[name] || name;
+    }
+
+    function switchRole(roleKey) {
+      currentRole = roleKey;
+      const role = roles[roleKey];
+      document.querySelector('#roleLabel').textContent = role.label;
+      document.querySelector('#userName').textContent = role.user;
+      document.querySelector('#userAvatar').textContent = role.avatar;
+      renderNav(roleKey);
+      showScreen(role.home);
+    }
+
+    function handleAction(event, message, nextScreen) {
+      event.preventDefault();
+      alert(message);
+      if (nextScreen) { showScreen(nextScreen); }
+      return false;
+    }
+
+    function toggleSoporteRemoto(modalidad) {
+      document.querySelector('#soporteRemoto').style.display = modalidad === 'remota' ? 'block' : 'none';
+    }
+
+    document.querySelector('#roleSwitch').addEventListener('change', (e) => switchRole(e.target.value));
+    document.querySelectorAll('main [data-screen]').forEach((el) => {
+      if (!el.closest('nav')) { el.addEventListener('click', () => showScreen(el.dataset.screen)); }
+    });
+
+    switchRole('coordinador');
+  </script>
+</body>
+</html>
