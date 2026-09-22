@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SIGPRA - CU-07 Consultar estado consolidado de practicas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      color: #1f2937;
+    }
+
+    /* Contenedor Principal */
+    .app-frame {
+      width: 1280px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      min-height: 950px;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      border-right: 1px solid #e5e7eb;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background-color: #ffffff;
+    }
+
+    .brand h2 {
+      color: #1e40af;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .brand p {
+      color: #6b7280;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .user-role-selector {
+      margin-top: 5px;
+    }
+
+    .user-role-selector label {
+      font-size: 10px;
+      color: #9ca3af;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .user-role-selector select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #374151;
+      background-color: #ffffff;
+    }
+
+    .nav-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .nav-item a {
+      text-decoration: none;
+      color: #374151;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .nav-item.active a {
+      background-color: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    /* Contenido Principal */
+    .main-content {
+      flex: 1;
+      padding: 32px 40px;
+      background-color: #f8fafc;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      margin-top: 2px;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      background-color: #1e40af;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Tarjetas / Secciones */
+    .card {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+
+    /* Formulario de Filtros */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .form-control {
+      padding: 9px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #111827;
+      outline: none;
+      width: 100%;
+      background-color: #ffffff;
+    }
+
+    /* Banners Informativos y de Excepción */
+    .info-banner {
+      background-color: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #1e40af;
+      margin-bottom: 16px;
+    }
+
+    .alert-banner {
+      background-color: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #92400e;
+      margin-bottom: 12px;
+    }
+
+    /* Botones */
+    .btn-outline {
+      border: 1px solid #2563eb;
+      color: #2563eb;
+      background: transparent;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background-color: #1d4ed8;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Tarjetas de Métricas (KPIS) */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .metric-title {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .metric-subtitle {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .metric-subtitle.green {
+      color: #059669;
+    }
+
+    .badge-pending {
+      background-color: #fef3c7;
+      color: #92400e;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 12px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    /* Tablas */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      text-align: left;
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+    }
+
+    .data-table td {
+      padding: 14px 0;
+      border-bottom: 1px solid #f3f4f6;
+      color: #374151;
+    }
+
+    .description-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-frame">
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>SIGPRA</h2>
+        <p>Gestion de practicas academicas</p>
+      </div>
+
+      <div class="user-role-selector">
+        <label>VER COMO</label>
+        <select>
+          <option>Coordinador de Pr...</option>
+        </select>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="#">Inicio</a></li>
+        <li class="nav-item"><a href="#">Periodos de practica</a></li>
+        <li class="nav-item"><a href="#">Convenios y plazas</a></li>
+        <li class="nav-item"><a href="#">Asignaciones</a></li>
+        <li class="nav-item active"><a href="#">Consolidado</a></li>
+      </ul>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      <!-- Encabezado -->
+      <header class="header">
+        <div>
+          <span class="header-subtitle">Panel de coordinacion</span>
+          <h1 class="header-title">CU-07 Consultar estado consolidado de practicas</h1>
+        </div>
+        <div class="user-profile">
+          <span class="user-name">Andres Rojas</span>
+          <div class="avatar">AR</div>
+        </div>
+      </header>
+
+      <!-- PASO 2-4: PERIODO Y FILTROS -->
+      <section class="card">
+        <h3 class="section-title">Paso 2-4: Periodo y filtros</h3>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Periodo academico</label>
+            <input type="text" class="form-control" value="2026-2">
+          </div>
+          <div class="form-group">
+            <label>Programa</label>
+            <select class="form-control">
+              <option>Todos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Institucion receptora</label>
+            <select class="form-control">
+              <option>Todas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Docente asesor</label>
+            <select class="form-control">
+              <option>Todos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="info-banner">
+          <strong>Rama 4a:</strong> si no se aplican filtros adicionales, el sistema genera el consolidado completo del periodo seleccionado.
+        </div>
+
+        <button class="btn-outline">Aplicar filtros</button>
+      </section>
+
+      <!-- BANNERS DE EXCEPCIÓN -->
+      <div class="alert-banner">
+        <strong>Excepcion 5a:</strong> si no existe informacion registrada para los filtros seleccionados, el sistema informa que no hay datos disponibles y no genera el consolidado.
+      </div>
+
+      <div class="alert-banner">
+        <strong>Excepcion 6a:</strong> si existen actividades pendientes de validacion, el consolidado se muestra como informacion parcial e indica cuantos registros estan pendientes.
+      </div>
+
+      <!-- MÉTRICAS PRINCIPALES (KPIS) -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-title">Horas aprobadas</span>
+          <span class="metric-value">2,340</span>
+          <span class="metric-subtitle">de 4,000 requeridas</span>
+        </div>
+
+        <div class="metric-card">
+          <span class="metric-title">Actividades validadas</span>
+          <span class="metric-value">210</span>
+          <span class="badge-pending">18 pendientes</span>
+        </div>
+
+        <div class="metric-card">
+          <span class="metric-title">Visitas realizadas</span>
+          <span class="metric-value">32</span>
+          <span class="metric-subtitle green">de 48 minimas</span>
+        </div>
+      </div>
+
+      <!-- PASO 7: CONSOLIDADO POR INSTITUCIÓN -->
+      <section class="card">
+        <h3 class="section-title">Paso 7: Consolidado por institucion</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>INSTITUCION</th>
+              <th>ESTUDIANTES</th>
+              <th>HORAS APROBADAS</th>
+              <th>AVANCE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Colegio San Jose</td>
+              <td>14</td>
+              <td>820</td>
+              <td>62%</td>
+            </tr>
+            <tr>
+              <td>Fundacion Renacer</td>
+              <td>9</td>
+              <td>510</td>
+              <td>55%</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- PASO 9-10: EXPORTAR -->
+      <section class="card">
+        <h3 class="section-title">Paso 9-10: Exportar</h3>
+        <p class="description-text">Rama 9a: el sistema genera el archivo en el formato disponible (PDF o Excel) y lo deja disponible para descarga. La consulta o generacion queda registrada con fecha, usuario y filtros aplicados.</p>
+        <button class="btn-primary">Exportar reporte (PDF/Excel)</button>
+      </section>
+    </main>
+  </div>
+
+</body>
+</html>

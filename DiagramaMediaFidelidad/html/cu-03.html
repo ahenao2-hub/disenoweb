@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SIGPRA - CU-03 Asignar practicante a plaza y docente asesor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      color: #1f2937;
+    }
+
+    /* Contenedor Principal */
+    .app-frame {
+      width: 1280px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      min-height: 950px;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      border-right: 1px solid #e5e7eb;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background-color: #ffffff;
+    }
+
+    .brand h2 {
+      color: #1e40af;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .brand p {
+      color: #6b7280;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .user-role-selector {
+      margin-top: 5px;
+    }
+
+    .user-role-selector label {
+      font-size: 10px;
+      color: #9ca3af;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .user-role-selector select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #374151;
+      background-color: #f9fafb;
+    }
+
+    .nav-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .nav-item a {
+      text-decoration: none;
+      color: #374151;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .nav-item.active a {
+      background-color: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    /* Contenido Principal */
+    .main-content {
+      flex: 1;
+      padding: 32px 40px;
+      background-color: #f8fafc;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      margin-top: 2px;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      background-color: #2563eb;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Tarjetas / Secciones */
+    .card {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+
+    /* Tablas de Selección */
+    .selection-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .selection-table th {
+      text-align: left;
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+    }
+
+    .selection-table td {
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+      color: #374151;
+    }
+
+    .selection-table th:first-child,
+    .selection-table td:first-child {
+      width: 40px;
+      text-align: center;
+    }
+
+    /* Banners Informativos y de Excepción */
+    .alert-banner {
+      background-color: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #92400e;
+    }
+
+    .info-banner {
+      background-color: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #1e40af;
+    }
+
+    /* Formularios y Campos */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .form-control {
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #374151;
+      background-color: #f3f4f6;
+      outline: none;
+      width: 100%;
+    }
+
+    /* Sección Reasignación */
+    .checkbox-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .checkbox-container span {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* Resumen de Confirmación */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      row-gap: 12px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .summary-label {
+      color: #6b7280;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .summary-value {
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .confirmation-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    /* Botón */
+    .btn-primary {
+      background-color: #1d4ed8;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-frame">
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>SIGPRA</h2>
+        <p>Gestion de practicas academicas</p>
+      </div>
+
+      <div class="user-role-selector">
+        <label>VER COMO</label>
+        <select>
+          <option>Coordinador de Pr...</option>
+        </select>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="#">Inicio</a></li>
+        <li class="nav-item"><a href="#">Periodos de practica</a></li>
+        <li class="nav-item"><a href="#">Convenios y plazas</a></li>
+        <li class="nav-item active"><a href="#">Asignaciones</a></li>
+        <li class="nav-item"><a href="#">Consolidado</a></li>
+      </ul>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      <!-- Encabezado -->
+      <header class="header">
+        <div>
+          <span class="header-subtitle">Panel de coordinacion</span>
+          <h1 class="header-title">CU-03 Asignar practicante a plaza y docente asesor</h1>
+        </div>
+        <div class="user-profile">
+          <span class="user-name">Andres Rojas</span>
+          <div class="avatar">AR</div>
+        </div>
+      </header>
+
+      <!-- PASO 1-3: ESTUDIANTES HABILITADOS -->
+      <section class="card">
+        <h3 class="section-title">Paso 1-3: Estudiantes habilitados</h3>
+        <table class="selection-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>ESTUDIANTE</th>
+              <th>PROGRAMA</th>
+              <th>PERIODO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="radio" name="student" checked></td>
+              <td>Juan Perez</td>
+              <td>Ingeniería de Sistemas</td>
+              <td>2026-2</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="student"></td>
+              <td>Maria Gomez</td>
+              <td>Licenciatura en Pedagogia</td>
+              <td>2026-2</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert-banner">
+          <strong>Excepcion 8a:</strong> Juan Perez ya tiene una asignacion activa en este periodo (Colegio San Jose, docente Ana Torres). El sistema bloquea una nueva asignacion salvo que se elija reasignar.
+        </div>
+      </section>
+
+      <!-- PASO 4-5: PLAZAS DISPONIBLES -->
+      <section class="card">
+        <h3 class="section-title">Paso 4-5: Plazas disponibles</h3>
+        <table class="selection-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>INSTITUCION</th>
+              <th>PLAZA</th>
+              <th>CONVENIO</th>
+              <th>CUPOS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="radio" name="place" checked></td>
+              <td>Colegio San Jose</td>
+              <td>Apoyo pedagogico - Primaria</td>
+              <td>Vigente</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="place"></td>
+              <td>Institucion Educativa Norte</td>
+              <td>Apoyo administrativo</td>
+              <td>Vencido</td>
+              <td>0</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert-banner">
+          <strong>Excepcion 9a:</strong> si la plaza no tiene cupos o el convenio no esta vigente, el sistema bloquea la asignacion e informa la causa.
+        </div>
+      </section>
+
+      <!-- PASO 6-7: DOCENTE ASESOR -->
+      <section class="card">
+        <h3 class="section-title">Paso 6-7: Docente asesor</h3>
+        <div class="form-group">
+          <label>Seleccione el docente asesor</label>
+          <input type="text" class="form-control" value="Ana Torres - 3 estudiantes asignados" readonly>
+        </div>
+      </section>
+
+      <!-- RAMA 5A: REASIGNACIÓN -->
+      <section class="card">
+        <h3 class="section-title">Rama 5a: Reasignacion</h3>
+        <div class="checkbox-container">
+          <input type="checkbox">
+          <span>Este estudiante requiere reasignacion (nueva plaza o docente asesor)</span>
+        </div>
+
+        <div class="info-banner">
+          Al confirmar, el sistema conserva el historial de la asignacion anterior y registra la nueva asignacion.
+        </div>
+      </section>
+
+      <!-- PASO 10-12: CONFIRMAR ASIGNACIÓN -->
+      <section class="card">
+        <h3 class="section-title">Paso 10-12: Confirmar asignacion</h3>
+        
+        <div class="summary-grid">
+          <span class="summary-label">ESTUDIANTE</span>
+          <span class="summary-value">Juan Perez</span>
+
+          <span class="summary-label">PLAZA / INSTITUCION</span>
+          <span class="summary-value">Apoyo pedagogico - Colegio San Jose</span>
+
+          <span class="summary-label">DOCENTE ASESOR</span>
+          <span class="summary-value">Ana Torres</span>
+
+          <span class="summary-label">PERIODO</span>
+          <span class="summary-value">2026-2</span>
+        </div>
+
+        <p class="confirmation-text">Al confirmar, el sistema registra la asignacion, actualiza el cupo ocupado y notifica al estudiante, al docente asesor y a la institucion receptora.</p>
+
+        <button class="btn-primary">Confirmar asignacion</button>
+      </section>
+    </main>
+  </div>
+
+</body>
+</html>
