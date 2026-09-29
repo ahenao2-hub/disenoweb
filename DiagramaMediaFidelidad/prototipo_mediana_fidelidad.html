@@ -57,11 +57,26 @@
     .notice.warning { background: #fff4e5; border-color: var(--amber); }
     .notice strong { color: inherit; }
     hr.sep { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
+    .login { align-items: center; display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login .panel { max-width: 380px; width: 100%; }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } aside { border-bottom: 1px solid var(--line); border-right: 0; padding: 14px; } nav { display: flex; overflow-x: auto; } nav button { white-space: nowrap; } main { padding: 22px 16px; } .grid { grid-template-columns: 1fr; } .wide { grid-column: auto; } .fields-2 { grid-template-columns: 1fr; } header { align-items: flex-start; gap: 12px; } }
   </style>
 </head>
 <body>
-  <div class="shell">
+  <!-- Pasos 1-3: inicio de sesion (comun a todos los roles) -->
+  <div class="login" id="loginView">
+    <div class="panel">
+      <div class="brand" style="padding:0 0 16px;margin-bottom:18px;"><strong>SIGPRA</strong><span>Gestion de practicas academicas</span></div>
+      <form onsubmit="return iniciarSesion(event)">
+        <label>Usuario institucional<input type="text" placeholder="usuario@udi.edu.co" required></label>
+        <label>Contrasena<input type="password" required></label>
+        <div id="errorLogin" class="notice warning" style="display:none;">Usuario o contrasena incorrectos. Intente de nuevo.</div>
+        <div class="actions"><button class="primary" type="submit">Ingresar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="shell" id="appShell" style="display:none;">
     <aside>
       <div class="brand"><strong>SIGPRA</strong><span>Gestion de practicas academicas</span></div>
 
@@ -213,55 +228,101 @@
       </section>
 
       <!-- CU-03: Asignar practicante a plaza y docente asesor -->
+      <!-- Todas las selecciones usan listas desplegables (select) para mantener un patron unico -->
       <section class="screen" id="asignaciones">
         <div class="stack">
+
+          <!-- Pasos 4-5: periodo vigente y seleccion del estudiante -->
           <div class="panel">
-            <h2>Paso 1-3: Estudiantes habilitados</h2>
-            <table>
-              <tr><th></th><th>Estudiante</th><th>Programa</th><th>Periodo</th></tr>
-              <tr><td><input type="radio" name="estSel" checked></td><td>Juan Perez</td><td>Ingenieria de Sistemas</td><td>2026-2</td></tr>
-              <tr><td><input type="radio" name="estSel"></td><td>Maria Gomez</td><td>Licenciatura en Pedagogia</td><td>2026-2</td></tr>
+            <h2>1. Estudiante practicante</h2>
+            <p class="eyebrow">Periodo vigente: <strong>2026-2</strong> (Ingenieria de Sistemas - Practica II)</p>
+            <label>Estudiante habilitado
+              <select id="selEstudiante" onchange="cu03Estudiante(this.value)">
+                <option value="">-- Seleccione un estudiante --</option>
+                <option value="maria">Maria Gomez - 1098765432</option>
+                <option value="carlos">Carlos Ruiz - 1095551234</option>
+                <option value="juan">Juan Perez - 1091234567 (con asignacion activa)</option>
+              </select>
+            </label>
+
+            <!-- Paso 6: datos del estudiante seleccionado -->
+            <table id="datosEstudiante" style="display:none;">
+              <tr><th>Programa</th><td>Ingenieria de Sistemas</td><th>Semestre</th><td>8</td></tr>
+              <tr><th>Estado</th><td><span class="tag">Habilitado</span></td><th>Horas requeridas</th><td>120</td></tr>
             </table>
-            <div class="notice warning"><strong>Excepcion 8a:</strong> Juan Perez ya tiene una asignacion activa en este periodo (Colegio San Jose, docente Ana Torres). El sistema bloquea una nueva asignacion salvo que se elija reasignar.</div>
+
+            <!-- Excepcion 5a: el estudiante ya tiene una asignacion activa -->
+            <div id="avisoAsignado" style="display:none;">
+              <div class="notice warning"><strong>Asignacion activa encontrada:</strong> este estudiante ya esta asignado en el periodo 2026-2 a <strong>Colegio San Jose - Apoyo pedagogico Primaria</strong> con la docente asesora <strong>Ana Torres</strong>. No es posible crear una nueva asignacion.</div>
+              <label style="margin-top:12px;"><span><input type="checkbox" id="chkReasignar" style="width:auto;margin-right:8px;" onchange="cu03Reasignar(this.checked)">Reasignar al estudiante (cambiar plaza y/o docente asesor)</span></label>
+              <label id="motivoReasignacion" style="display:none;margin-top:12px;">Motivo de la reasignacion
+                <select>
+                  <option>-- Seleccione un motivo --</option>
+                  <option>Solicitud de la institucion receptora</option>
+                  <option>Solicitud del estudiante</option>
+                  <option>Cambio de disponibilidad del docente asesor</option>
+                  <option>Otro</option>
+                </select>
+              </label>
+            </div>
           </div>
 
-          <div class="panel">
-            <h2>Paso 4-5: Plazas disponibles</h2>
-            <table>
-              <tr><th></th><th>Institucion</th><th>Plaza</th><th>Convenio</th><th>Cupos</th></tr>
-              <tr><td><input type="radio" name="plazaSel" checked></td><td>Colegio San Jose</td><td>Apoyo pedagogico - Primaria</td><td>Vigente</td><td>1</td></tr>
-              <tr><td><input type="radio" name="plazaSel" disabled></td><td>Institucion Educativa Norte</td><td>Apoyo administrativo</td><td>Vencido</td><td>0</td></tr>
+          <!-- Pasos 7-9: plazas (solo se listan las que tienen cupo y convenio vigente) -->
+          <div class="panel" id="panelPlaza" style="display:none;">
+            <h2>2. Plaza de practica</h2>
+            <p class="eyebrow">Solo se muestran plazas con cupo disponible y convenio vigente.</p>
+            <label>Plaza disponible
+              <select id="selPlaza" onchange="cu03Plaza(this.value)">
+                <option value="">-- Seleccione una plaza --</option>
+                <option value="sanjose">Colegio San Jose - Apoyo pedagogico Primaria (1 cupo)</option>
+                <option value="renacer">Fundacion Renacer - Practica social comunitaria (2 cupos)</option>
+              </select>
+            </label>
+
+            <!-- Paso 9: detalle de la plaza seleccionada -->
+            <table id="detallePlaza" style="display:none;">
+              <tr><th>Institucion</th><td>Colegio San Jose</td><th>Convenio</th><td>CONV-2026-014 (vigente hasta 15/12/2026)</td></tr>
+              <tr><th>Nivel / Jornada</th><td>Primaria - Manana</td><th>Docente titular</th><td>Ana Martinez</td></tr>
+              <tr><th>Cupos</th><td>1 disponible de 2</td><th>Contacto</th><td>ana.martinez@colegiosanjose.edu.co</td></tr>
             </table>
-            <div class="notice warning"><strong>Excepcion 9a:</strong> si la plaza no tiene cupos o el convenio no esta vigente, el sistema bloquea la asignacion e informa la causa.</div>
           </div>
 
-          <div class="panel">
-            <h2>Paso 6-7: Docente asesor</h2>
-            <label>Seleccione el docente asesor
-              <select>
-                <option>Ana Torres - 3 estudiantes asignados</option>
-                <option>Laura Gomez - 2 estudiantes asignados</option>
+          <!-- Pasos 10-11: docentes asesores con disponibilidad -->
+          <div class="panel" id="panelDocente" style="display:none;">
+            <h2>3. Docente asesor</h2>
+            <p class="eyebrow">Solo se muestran docentes con disponibilidad en el periodo.</p>
+            <label>Docente asesor
+              <select id="selDocente" onchange="cu03Docente(this.value)">
+                <option value="">-- Seleccione un docente --</option>
+                <option value="laura">Laura Gomez - 2 de 6 estudiantes asignados</option>
+                <option value="luis">Luis Ramirez - 4 de 6 estudiantes asignados</option>
               </select>
             </label>
           </div>
 
-          <div class="panel">
-            <h2>Rama 5a: Reasignacion</h2>
-            <label><input type="checkbox" style="width:auto;display:inline-block;margin-right:8px;">Este estudiante requiere reasignacion (nueva plaza o docente asesor)</label>
-            <div class="notice">Al confirmar, el sistema conserva el historial de la asignacion anterior y registra la nueva asignacion.</div>
+          <!-- Pasos 12-13: resumen y confirmacion -->
+          <div class="panel" id="panelResumen" style="display:none;">
+            <h2>4. Resumen de la asignacion</h2>
+            <table>
+              <tr><th>Estudiante</th><td id="resEstudiante">-</td></tr>
+              <tr><th>Plaza / Institucion</th><td id="resPlaza">-</td></tr>
+              <tr><th>Docente asesor</th><td id="resDocente">-</td></tr>
+              <tr><th>Periodo</th><td>2026-2</td></tr>
+              <tr><th>Tipo</th><td id="resTipo">Nueva asignacion</td></tr>
+            </table>
+            <p class="eyebrow">Al confirmar, el sistema registra la asignacion, descuenta el cupo de la plaza y notifica al estudiante, al docente asesor y a la institucion receptora.</p>
+            <div class="actions">
+              <button class="secondary" type="button" onclick="cu03Reset()">Cancelar</button>
+              <button class="primary" type="button" onclick="cu03Confirmar()">Confirmar asignacion</button>
+            </div>
           </div>
 
-          <div class="panel">
-            <h2>Paso 10-12: Confirmar asignacion</h2>
-            <table>
-              <tr><th>Estudiante</th><td>Juan Perez</td></tr>
-              <tr><th>Plaza / Institucion</th><td>Apoyo pedagogico - Colegio San Jose</td></tr>
-              <tr><th>Docente asesor</th><td>Ana Torres</td></tr>
-              <tr><th>Periodo</th><td>2026-2</td></tr>
-            </table>
-            <p class="eyebrow">Al confirmar, el sistema registra la asignacion, actualiza el cupo ocupado y notifica al estudiante, al docente asesor y a la institucion receptora.</p>
-            <div class="actions"><button class="primary" onclick="alert('Asignacion registrada y notificada al estudiante, al docente asesor y a la institucion receptora.')">Confirmar asignacion</button></div>
+          <!-- Paso 19: mensaje de confirmacion -->
+          <div class="panel" id="panelExito" style="display:none;">
+            <div class="notice"><strong>Asignacion registrada correctamente.</strong> Se notifico al estudiante, al docente asesor y la informacion quedo disponible para la institucion receptora. El estudiante ya puede iniciar el registro de actividades (CU-04).</div>
+            <div class="actions"><button class="primary" type="button" onclick="cu03Reset()">Nueva asignacion</button></div>
           </div>
+
         </div>
       </section>
 
@@ -644,6 +705,64 @@
     document.querySelectorAll('main [data-screen]').forEach((el) => {
       if (!el.closest('nav')) { el.addEventListener('click', () => showScreen(el.dataset.screen)); }
     });
+
+    function iniciarSesion(event) {
+      event.preventDefault();
+      mostrar('loginView', false);
+      $('appShell').style.display = '';
+      switchRole($('roleSwitch').value);
+      return false;
+    }
+
+    /* ---------- CU-03: logica del flujo de asignacion ---------- */
+    const cu03Nombres = { maria: 'Maria Gomez', carlos: 'Carlos Ruiz', juan: 'Juan Perez' };
+    const cu03Plazas = { sanjose: 'Apoyo pedagogico Primaria - Colegio San Jose', renacer: 'Practica social comunitaria - Fundacion Renacer' };
+    const cu03Docentes = { laura: 'Laura Gomez', luis: 'Luis Ramirez' };
+    const $ = (id) => document.getElementById(id);
+    const mostrar = (id, visible) => { $(id).style.display = visible ? '' : 'none'; };
+
+    function cu03Estudiante(valor) {
+      mostrar('panelExito', false);
+      mostrar('datosEstudiante', !!valor);
+      const asignado = valor === 'juan';
+      mostrar('avisoAsignado', asignado);
+      $('chkReasignar').checked = false;
+      mostrar('motivoReasignacion', false);
+      /* Excepcion: con asignacion activa se bloquea el flujo salvo que se elija reasignar */
+      mostrar('panelPlaza', !!valor && !asignado);
+      if (!valor || asignado) { mostrar('panelDocente', false); mostrar('panelResumen', false); }
+      $('resEstudiante').textContent = cu03Nombres[valor] || '-';
+      $('resTipo').textContent = 'Nueva asignacion';
+    }
+
+    function cu03Reasignar(activo) {
+      mostrar('motivoReasignacion', activo);
+      mostrar('panelPlaza', activo);
+      if (!activo) { mostrar('panelDocente', false); mostrar('panelResumen', false); }
+      $('resTipo').textContent = activo ? 'Reasignacion (se conserva el historial de la asignacion anterior)' : 'Nueva asignacion';
+    }
+
+    function cu03Plaza(valor) {
+      mostrar('detallePlaza', !!valor);
+      mostrar('panelDocente', !!valor);
+      if (!valor) { mostrar('panelResumen', false); }
+      $('resPlaza').textContent = cu03Plazas[valor] || '-';
+    }
+
+    function cu03Docente(valor) {
+      mostrar('panelResumen', !!valor);
+      $('resDocente').textContent = cu03Docentes[valor] || '-';
+    }
+
+    function cu03Confirmar() {
+      ['panelPlaza', 'panelDocente', 'panelResumen'].forEach((id) => mostrar(id, false));
+      mostrar('panelExito', true);
+    }
+
+    function cu03Reset() {
+      ['selEstudiante', 'selPlaza', 'selDocente'].forEach((id) => { $(id).value = ''; });
+      ['datosEstudiante', 'avisoAsignado', 'panelPlaza', 'detallePlaza', 'panelDocente', 'panelResumen', 'panelExito'].forEach((id) => mostrar(id, false));
+    }
 
     switchRole('coordinador');
   </script>
