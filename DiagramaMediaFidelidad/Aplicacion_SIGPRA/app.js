@@ -1,5 +1,10 @@
 const STORAGE_KEY = "sigpra_mvp_data_v1";
 const SESSION_KEY = "sigpra_mvp_session_v1";
+const API_BASE = "/api";
+
+let apiEnabled = false;
+let apiStatusText = "Modo local";
+let syncTimer = null;
 
 const additionalDemoStudents = [
   { id: 7, name: "Sofia Martinez", email: "sofia@udi.edu.co", password: "123456", role: "ESTUDIANTE", initials: "SM", code: "UDI-2026-003", semester: 8 },
@@ -22,6 +27,11 @@ const seedData = {
     { id: 5, name: "Miguel Rios", email: "miguel@udi.edu.co", password: "123456", role: "ESTUDIANTE", initials: "MR", code: "UDI-2026-002", semester: 8 },
     { id: 6, name: "Carlos Mendoza", email: "docente2@udi.edu.co", password: "123456", role: "DOCENTE_ASESOR", initials: "CM" },
     ...additionalDemoStudents
+  ],
+  programs: [
+    { id: 1, name: "Ingenieria de Sistemas", levels: ["Practica profesional"], active: true },
+    { id: 2, name: "Licenciatura en Pedagogia", levels: ["Practica I", "Practica II"], active: true },
+    { id: 3, name: "Licenciatura en Educacion Infantil", levels: ["VIII semestre"], active: true }
   ],
   periods: [
     {
@@ -159,6 +169,18 @@ function loadData() {
       }
       if (migrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
     }
+    if (!Array.isArray(stored.programs)) {
+      stored.programs = structuredClone(seedData.programs);
+      for (const period of stored.periods || []) {
+        let program = stored.programs.find((item) => item.name.toLocaleLowerCase("es") === String(period.program).toLocaleLowerCase("es"));
+        if (!program) {
+          program = { id: nextId(stored.programs), name: period.program, levels: [], active: true };
+          stored.programs.push(program);
+        }
+        if (!program.levels.includes(period.level)) program.levels.push(period.level);
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    }
     return stored;
   } catch {
     return structuredClone(seedData);
@@ -167,6 +189,89 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  syncDataWithApi();
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Error de API" }));
+    throw new Error(error.message || "Error de API");
+  }
+  return response.json();
+}
+
+async function initializeApi() {
+  try {
+    await apiRequest("/health");
+    const [state, periods, agreements, assignments] = await Promise.all([
+      apiRequest("/state"),
+      apiRequest("/periods"),
+      apiRequest("/agreements"),
+      apiRequest("/assignments")
+    ]);
+    if (state?.data) {
+      if (!Array.isArray(state.data.programs)) {
+        state.data.programs = structuredClone(seedData.programs);
+        for (const period of state.data.periods || []) {
+          let program = state.data.programs.find((item) => item.name.toLocaleLowerCase("es") === String(period.program).toLocaleLowerCase("es"));
+          if (!program) { program = { id: nextId(state.data.programs), name: period.program, levels: [], active: true }; state.data.programs.push(program); }
+          if (!program.levels.includes(period.level)) program.levels.push(period.level);
+        }
+      }
+      data = {
+        ...state.data,
+        periods: periods.periods,
+        institutions: agreements.institutions,
+        agreements: agreements.agreements,
+        places: agreements.places,
+        assignments: assignments.assignments
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    apiEnabled = true;
+    apiStatusText = "API Express conectada";
+  } catch {
+    apiEnabled = false;
+    apiStatusText = "Modo local";
+  }
+  render();
+}
+
+function syncDataWithApi() {
+  if (!apiEnabled) return;
+  window.clearTimeout(syncTimer);
+  syncTimer = window.setTimeout(async () => {
+    try {
+      await apiRequest("/state", {
+        method: "PUT",
+        body: JSON.stringify(data)
+      });
+      apiStatusText = "API Express sincronizada";
+    } catch {
+      apiEnabled = false;
+      apiStatusText = "Modo local";
+      render();
+    }
+  }, 250);
+}
+
+async function loginWithApi(email, password) {
+  if (!apiEnabled) {
+    return data.users.find((item) => item.email === email && item.password === password) || null;
+  }
+  try {
+    const result = await apiRequest("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+    return data.users.find((item) => item.id === result.user.id) || result.user;
+  } catch {
+    return null;
+  }
 }
 
 function loadSession() {
@@ -263,7 +368,7 @@ function statusTag(status) {
 
 function agreementStatus(agreement) {
   const today = new Date().toISOString().slice(0, 10);
-  return agreement.status === "VIGENTE" && agreement.document && agreement.start <= today && agreement.end >= today
+  return Boolean(String(agreement.document || "").trim()) && agreement.end >= today
     ? "VIGENTE"
     : "INACTIVA";
 }
@@ -343,6 +448,7 @@ function render() {
         <div class="sidebar-footer">
           <strong>${escapeHtml(user.name)}</strong>
           <p class="muted">${escapeHtml(roleLabel(user.role))}</p>
+          <p class="api-status">${escapeHtml(apiStatusText)}</p>
           <button class="button" data-action="logout">Cerrar sesion</button>
         </div>
       </aside>
@@ -530,7 +636,7 @@ function renderLogin() {
           <h1>SIGPRA</h1>
           <p>Aplicacion web para gestionar practicas academicas: periodos, convenios, asignaciones, evidencias, validacion, visitas y reportes.</p>
         </div>
-        <p>Version funcional de demostracion con persistencia local en navegador.</p>
+        <p>Version funcional con backend Node, Express, TypeScript y APIs MVC. ${escapeHtml(apiStatusText)}.</p>
       </section>
       <section class="login-card">
         <div class="brand login-brand">
@@ -664,8 +770,37 @@ function metricCard(label, value, helper) {
   `;
 }
 
+function renderProgramCatalog() {
+  if (currentUser()?.role !== "COORDINADOR") return "";
+  const rows = (data.programs || []).map((program) => `
+    <tr>
+      <td>${escapeHtml(program.name)}</td>
+      <td>${escapeHtml(program.levels.join(", "))}</td>
+      <td>${statusTag(program.active ? "ACTIVA" : "INACTIVA")}</td>
+      <td>
+        <button class="button" data-action="edit-program" data-id="${program.id}">Editar</button>
+        <button class="button" data-action="delete-program" data-id="${program.id}">Eliminar</button>
+      </td>
+    </tr>`).join("");
+  return `<article class="card full">
+    <h2>Gestion de programas academicos</h2>
+    <p class="muted">Registra programas y sus niveles de practica. Los programas en uso no pueden eliminarse.</p>
+    <form class="form-grid" data-submit="academic-program" id="program-crud-form">
+      <input type="hidden" name="programId" value="">
+      <label>Nombre del programa<input name="name" required maxlength="120" placeholder="Nombre del programa"></label>
+      <label>Niveles de practica (separados por coma)<input name="levels" required placeholder="Practica I, Practica II"></label>
+      <label>Estado<select name="active"><option value="true">ACTIVO</option><option value="false">INACTIVO</option></select></label>
+      <div class="toolbar full-field"><button class="button primary" type="submit">Guardar programa</button>
+      <button class="button" type="button" data-action="cancel-program-edit">Limpiar</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>PROGRAMA</th><th>NIVELES</th><th>ESTADO</th><th>ACCIONES</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="4">No hay programas registrados.</td></tr>'}</tbody></table></div>
+  </article>`;
+}
+
 function renderPeriods() {
   return `
+    ${renderProgramCatalog()}
     <section class="stack">
       <article class="card full">
         <h2>Programar periodo de practica</h2>
@@ -1345,16 +1480,8 @@ function modalForm(type, id) {
   if (type === "period") {
     const period = id ? data.periods.find((item) => item.id === Number(id)) : null;
     const criterion = (index, field, fallback) => escapeHtml(period?.rubric?.[index]?.[field] ?? fallback);
-    const programs = [...new Set([
-      "Ingenieria de Sistemas",
-      "Licenciatura en Pedagogia",
-      ...data.periods.map((item) => item.program)
-    ])];
-    const levels = [...new Set([
-      "Practica I",
-      "Practica II",
-      ...data.periods.map((item) => item.level)
-    ])];
+    const programs = (data.programs || []).filter((item) => item.active || item.name === period?.program);
+    const levels = (data.programs || []).find((item) => item.name === period?.program)?.levels || [];
     return `
       <form class="form-grid workflow-form guided-workflow" data-guided-workflow data-submit="period" data-id="${period?.id || ""}">
         <article class="card full workflow-step" data-workflow-step>
@@ -1362,7 +1489,7 @@ function modalForm(type, id) {
           <label>Programa academico
             <select name="program" required>
               <option value="">-- Seleccione un programa --</option>
-              ${programs.map((program) => `<option value="${escapeHtml(program)}" ${program === period?.program ? "selected" : ""}>${escapeHtml(program)}</option>`).join("")}
+              ${programs.map((program) => `<option value="${escapeHtml(program.name)}" ${program.name === period?.program ? "selected" : ""}>${escapeHtml(program.name)}</option>`).join("")}
             </select>
           </label>
           <label>Nivel de practica
@@ -1630,7 +1757,34 @@ function handleSubmit(form, submitter) {
   const type = form.dataset.submit;
   const formData = Object.fromEntries(new FormData(form).entries());
   const user = currentUser();
+  if (type === "academic-program") {
+    if (user?.role !== "COORDINADOR") { toast("Operacion no autorizada."); return; }
+    const name = String(formData.name || "").trim().replace(/\s+/g, " ");
+    const levels = [...new Set(String(formData.levels || "").split(",").map((value) => value.trim()).filter(Boolean))];
+    const id = Number(formData.programId || 0);
+    const existing = (data.programs || []).find((program) => program.id === id);
+    if (name.length < 3 || !levels.length || levels.some((level) => level.length > 100)) { toast("Verifica el nombre y los niveles."); return; }
+    if (data.programs.some((program) => program.id !== id && program.name.toLocaleLowerCase("es") === name.toLocaleLowerCase("es"))) {
+      toast("Ya existe un programa con ese nombre."); return;
+    }
+    if (existing) {
+      const related = data.periods.filter((period) => period.program === existing.name);
+      if (related.length && (existing.name !== name || related.some((period) => !levels.includes(period.level)))) {
+        toast("No puedes cambiar el nombre ni retirar niveles utilizados por periodos existentes."); return;
+      }
+      Object.assign(existing, { name, levels, active: formData.active === "true" });
+      audit("Actualizo programa academico", "PROGRAMA_ACADEMICO");
+    } else {
+      data.programs.push({ id: nextId(data.programs), name, levels, active: formData.active === "true" });
+      audit("Registro programa academico", "PROGRAMA_ACADEMICO");
+    }
+    saveData(); toast("Programa guardado correctamente."); render(); return;
+  }
   if (type === "period") {
+    const selectedProgram = (data.programs || []).find((item) => item.name === String(formData.program));
+    if (!selectedProgram || !selectedProgram.active || !selectedProgram.levels.includes(String(formData.level))) {
+      toast("Selecciona un programa activo y uno de sus niveles registrados."); return;
+    }
     const rubric = [1, 2, 3].map((index) => ({
       name: String(formData[`criterion${index}`]).trim(),
       weight: Number(formData[`weight${index}`])
@@ -1696,7 +1850,7 @@ function handleSubmit(form, submitter) {
       start: formData.start,
       end: formData.end,
       document: String(formData.document).trim(),
-      status: formData.document && formData.end >= new Date().toISOString().slice(0, 10) ? "VIGENTE" : "INACTIVA"
+      status: String(formData.document || "").trim() && formData.end >= new Date().toISOString().slice(0, 10) ? "VIGENTE" : "INACTIVA"
     };
     data.agreements.push(agreement);
     audit("Registro un convenio", "CONVENIO");
@@ -1719,7 +1873,7 @@ function handleSubmit(form, submitter) {
       start: formData.start,
       end: formData.end,
       document: document?.name || "",
-      status: document && formData.start <= new Date().toISOString().slice(0, 10) &&
+      status: document &&
         formData.end >= new Date().toISOString().slice(0, 10) ? "VIGENTE" : "INACTIVA"
     };
     data.agreements.push(agreement);
@@ -2005,11 +2159,11 @@ function downloadFile(name, content, type) {
   URL.revokeObjectURL(url);
 }
 
-document.addEventListener("submit", (event) => {
+document.addEventListener("submit", async (event) => {
   if (event.target.id === "login-form") {
     event.preventDefault();
     const formData = Object.fromEntries(new FormData(event.target).entries());
-    const user = data.users.find((item) => item.email === formData.email && item.password === formData.password);
+    const user = await loginWithApi(String(formData.email), String(formData.password));
     if (!user) {
       toast("Correo o clave incorrectos.");
       return;
@@ -2047,6 +2201,17 @@ document.addEventListener("change", (event) => {
     updateAssignmentWorkflow(assignmentForm, event.target.name);
     return;
   }
+  if (event.target.matches('[data-submit="period"] [name="program"]')) {
+    const form = event.target.closest('form[data-submit="period"]');
+    const program = (data.programs || []).find((item) => item.name === event.target.value);
+    const select = form.elements.level;
+    const previous = select.value;
+    select.innerHTML = '<option value="">-- Seleccione un nivel --</option>' +
+      (program?.levels || []).map((level) => `<option value="${escapeHtml(level)}">${escapeHtml(level)}</option>`).join("");
+    if (program?.levels.includes(previous)) select.value = previous;
+    updateGuidedWorkflow(form);
+    return;
+  }
   if (event.target.id !== "role-switch") return;
   const role = event.target.value;
   const user = data.users.find((item) => item.role === role);
@@ -2060,10 +2225,11 @@ document.addEventListener("change", (event) => {
   render();
 });
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
   const login = event.target.closest("[data-login]");
   if (login) {
-    const user = data.users.find((item) => item.email === login.dataset.login);
+    const demoUser = data.users.find((item) => item.email === login.dataset.login);
+    const user = await loginWithApi(login.dataset.login, demoUser?.password || "123456");
     saveSession(user);
     currentView = "dashboard";
     render();
@@ -2086,6 +2252,32 @@ document.addEventListener("click", (event) => {
   const action = event.target.closest("[data-action]");
   if (!action) return;
 
+  if (["edit-program", "delete-program", "cancel-program-edit"].includes(action.dataset.action)) {
+    if (currentUser()?.role !== "COORDINADOR") { toast("Operacion no autorizada."); return; }
+    const program = (data.programs || []).find((item) => item.id === Number(action.dataset.id));
+    if (action.dataset.action === "delete-program") {
+      if (!program) return;
+      if (data.periods.some((period) => period.program === program.name)) {
+        toast("No se puede eliminar: el programa tiene periodos asociados. Puedes desactivarlo."); return;
+      }
+      if (!window.confirm(`Eliminar el programa ${program.name}?`)) return;
+      data.programs = data.programs.filter((item) => item.id !== program.id);
+      audit("Elimino programa academico", "PROGRAMA_ACADEMICO");
+      saveData(); render(); return;
+    }
+    const form = document.querySelector("#program-crud-form");
+    if (!form) return;
+    form.reset();
+    form.elements.programId.value = "";
+    if (action.dataset.action === "edit-program" && program) {
+      form.elements.programId.value = String(program.id);
+      form.elements.name.value = program.name;
+      form.elements.levels.value = program.levels.join(", ");
+      form.elements.active.value = String(program.active);
+    }
+    form.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
   if (action.dataset.action === "reset-assignment-workflow") {
     const form = action.closest('[data-submit="assignment"]');
     form.elements.studentId.value = "";
@@ -2123,4 +2315,4 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") document.querySelector(".modal-backdrop")?.remove();
 });
 
-render();
+initializeApi();
