@@ -38,6 +38,29 @@ button {
   cursor: pointer;
 }
 
+/* Conservar la escala de SIGPRA sobre la base de Bootstrap. */
+h2 {
+  font-size: 1.5em;
+}
+
+h3 {
+  font-size: 1.17em;
+}
+
+select.form-select {
+  padding-right: 2.25rem;
+}
+
+input.form-check-input {
+  padding: 0;
+  margin-right: 0.35em;
+}
+
+input.form-check-input[type="checkbox"],
+input.form-check-input[type="radio"] {
+  width: 1em;
+}
+
 .login-page {
   display: grid;
   grid-template-columns: minmax(320px, 0.85fr) minmax(420px, 1.15fr);
@@ -390,7 +413,7 @@ textarea {
   background: var(--teal);
 }
 
-.modal-backdrop {
+.sigpra-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -400,7 +423,7 @@ textarea {
   background: rgba(15, 23, 42, 0.45);
 }
 
-.modal {
+.sigpra-modal {
   width: min(760px, 100%);
   max-height: min(86vh, 760px);
   overflow: auto;
@@ -410,7 +433,7 @@ textarea {
   box-shadow: 0 28px 80px rgba(15, 23, 42, 0.35);
 }
 
-.modal-header {
+.sigpra-modal-header {
   display: flex;
   align-items: start;
   justify-content: space-between;
@@ -418,7 +441,7 @@ textarea {
   margin-bottom: 16px;
 }
 
-.modal-header h2 {
+.sigpra-modal-header h2 {
   margin: 0;
 }
 
@@ -428,7 +451,7 @@ textarea {
   font-size: 24px;
 }
 
-.toast {
+.sigpra-toast {
   position: fixed;
   right: 18px;
   bottom: 18px;
@@ -721,7 +744,7 @@ input[type="radio"] {
   font-weight: 400;
 }
 
-.toast {
+.sigpra-toast {
   background: #2457a6;
 }
 

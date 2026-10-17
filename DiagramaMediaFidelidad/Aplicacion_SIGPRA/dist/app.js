@@ -14,6 +14,7 @@ function createApp() {
     const publicDir = process.cwd();
     app.use((0, cors_1.default)());
     app.use(express_1.default.json({ limit: "2mb" }));
+    app.use("/node_modules/bootstrap/dist", express_1.default.static(path_1.default.join(publicDir, "node_modules/bootstrap/dist")));
     app.use("/api", process.env.SIGPRA_STORAGE === "postgres" ? routes_1.postgresRouter : routes_2.apiRouter);
     app.get("/", (_req, res) => res.sendFile(path_1.default.join(publicDir, "index.html")));
     app.get("/app.js", (_req, res) => res.sendFile(path_1.default.join(publicDir, "app.js")));

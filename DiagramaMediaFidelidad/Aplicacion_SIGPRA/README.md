@@ -20,7 +20,15 @@ http://localhost:3000
 
 ### Opcion local de respaldo
 
-Abrir `index.html` en el navegador. En este modo la aplicacion funciona con `localStorage`, sin servidor.
+Ejecutar `npm install` una vez y abrir `index.html` en el navegador. En este modo la aplicacion funciona con `localStorage`, sin servidor.
+
+## Bootstrap
+
+La interfaz utiliza Bootstrap 5.3.8, instalado como dependencia de npm. El CSS y el bundle JavaScript (incluye Popper) se cargan desde `node_modules/bootstrap/dist`, tanto con Express como al abrir `index.html` directamente, sin depender de un CDN.
+
+Los botones, campos de formulario, selectores, casillas, tablas adaptables, avisos e indicadores de estado usan clases de Bootstrap. `styles.css` se carga despues para conservar la identidad visual de SIGPRA. Las ventanas y notificaciones propias usan el prefijo `sigpra-` para evitar conflictos con los componentes de Bootstrap.
+
+Documentacion: [Bootstrap 5.3](https://getbootstrap.com/docs/5.3/getting-started/introduction/).
 
 ## Backend MVC
 
