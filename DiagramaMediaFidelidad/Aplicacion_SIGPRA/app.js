@@ -1,4 +1,4 @@
-const STORAGE_KEY = "sigpra_mvp_data_v1";
+﻿const STORAGE_KEY = "sigpra_mvp_data_v1";
 const SESSION_KEY = "sigpra_mvp_session_v1";
 const API_BASE = "/api";
 
@@ -432,17 +432,6 @@ function render() {
           <strong>SIGPRA</strong>
           <span>Gestion de practicas academicas</span>
         </div>
-        <div class="role-switch">
-          <label for="role-switch">Ver como</label>
-          <select class="form-select" id="role-switch">
-            ${[
-              ["COORDINADOR", "Coordinador de Practicas"],
-              ["ESTUDIANTE", "Estudiante"],
-              ["DOCENTE_ASESOR", "Docente Asesor"],
-              ["DIRECTOR", "Director del programa"]
-            ].map(([role, label]) => `<option value="${role}" ${user.role === role ? "selected" : ""}>${label}</option>`).join("")}
-          </select>
-        </div>
         <nav class="nav flex-nowrap" aria-label="Navegacion de ${escapeHtml(roleLabel(user.role))}">
           ${renderNavigation(nav)}
         </nav>
@@ -630,37 +619,76 @@ function renderView(user) {
 }
 
 function renderLogin() {
+  const defaultUser = data.users.find((u) => u.role === "COORDINADOR") || data.users[0];
+
+  const roleOrder = [
+    { role: "COORDINADOR", title: "Coordinación" },
+    { role: "DIRECTOR", title: "Dirección de Programa" },
+    { role: "DOCENTE_ASESOR", title: "Docentes Asesores" },
+    { role: "ESTUDIANTE", title: "Estudiantes" }
+  ];
+
+  const optionsHtml = roleOrder
+    .map((group) => {
+      const groupUsers = data.users.filter((u) => u.role === group.role);
+      if (!groupUsers.length) return "";
+      return `
+        <optgroup label="${escapeHtml(group.title)}">
+          ${groupUsers
+            .map((u) => {
+              const isSelected = defaultUser && u.id === defaultUser.id ? "selected" : "";
+              const extraCode = u.code ? ` (${u.code})` : "";
+              return `<option value="${escapeHtml(u.email)}" ${isSelected}>${escapeHtml(u.name)}${escapeHtml(extraCode)} — ${escapeHtml(u.email)}</option>`;
+            })
+            .join("")}
+        </optgroup>
+      `;
+    })
+    .join("");
+
   app.innerHTML = `
     <main class="login-page">
-      <section class="login-aside">
-        <div>
-          <h1>SIGPRA</h1>
-          <p>Aplicacion web para gestionar practicas academicas: periodos, convenios, asignaciones, evidencias, validacion, visitas y reportes.</p>
-        </div>
-        <p>Version funcional con backend Node, Express, TypeScript y APIs MVC. ${escapeHtml(apiStatusText)}.</p>
-      </section>
       <section class="login-card">
-        <div class="brand login-brand">
-          <strong>SIGPRA</strong>
-          <span>Gestion de practicas academicas</span>
+        <div class="login-photo-side">
+          <img
+            src="login-photo.jpg"
+            alt="SIGPRA - Gestión de Prácticas Académicas"
+            class="login-photo-img"
+            onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80';"
+          />
+          <div class="login-photo-caption">
+            <h3>SIGPRA</h3>
+            <p>Gestión de Prácticas Académicas y Pedagógicas</p>
+          </div>
         </div>
-        <h2>Iniciar sesion</h2>
-        <p class="muted">Usa una cuenta de prueba o ingresa correo y clave.</p>
-        <form id="login-form" class="form-grid">
-          <label class="full-field">Correo
-            <input class="form-control" name="email" type="email" value="coordinador@udi.edu.co" required />
-          </label>
-          <label class="full-field">Clave
-            <input class="form-control" name="password" type="password" value="123456" required />
-          </label>
-          <button class="btn btn-primary button primary full-field" type="submit">Entrar</button>
-        </form>
-        <div class="demo-users">
-          ${data.users
-            .filter((user) => ["COORDINADOR", "ESTUDIANTE", "DOCENTE_ASESOR", "DIRECTOR"].includes(user.role))
-            .slice(0, 4)
-            .map((user) => `<button data-login="${user.email}"><strong>${escapeHtml(roleLabel(user.role))}</strong><br><span class="muted">${escapeHtml(user.email)}</span></button>`)
-            .join("")}
+        <div class="login-form-side">
+          <div class="brand login-brand">
+            <strong>SIGPRA</strong>
+            <span>Gestion de practicas academicas</span>
+          </div>
+          <h2>Iniciar sesion</h2>
+          <p class="muted">Selecciona en la lista con quién deseas ingresar al sistema.</p>
+          <form id="login-form" class="form-grid">
+            <label class="full-field">Usuario para ingresar
+              <select id="login-user-select" name="user_select" class="form-select">
+                ${optionsHtml}
+              </select>
+            </label>
+            <div id="login-user-preview" class="login-user-preview full-field">
+              <span class="avatar login-preview-avatar">${escapeHtml(defaultUser?.initials || "RC")}</span>
+              <div class="login-preview-info">
+                <strong id="login-preview-name">${escapeHtml(defaultUser?.name || "")}</strong>
+                <span id="login-preview-role" class="muted">${escapeHtml(roleLabel(defaultUser?.role || ""))}</span>
+              </div>
+            </div>
+            <label class="full-field">Correo
+              <input id="login-email" name="email" type="email" value="${escapeHtml(defaultUser?.email || "coordinador@udi.edu.co")}" required class="form-control" />
+            </label>
+            <label class="full-field">Clave
+              <input id="login-password" name="password" type="password" value="${escapeHtml(defaultUser?.password || "123456")}" required class="form-control" />
+            </label>
+            <button class="button primary full-field btn btn-primary" type="submit">Entrar</button>
+          </form>
         </div>
       </section>
     </main>
@@ -2164,7 +2192,9 @@ document.addEventListener("submit", async (event) => {
   if (event.target.id === "login-form") {
     event.preventDefault();
     const formData = Object.fromEntries(new FormData(event.target).entries());
-    const user = await loginWithApi(String(formData.email), String(formData.password));
+    const email = String(formData.email?.trim() || formData.user_select || "");
+    const password = String(formData.password || "123456");
+    const user = await loginWithApi(email, password);
     if (!user) {
       toast("Correo o clave incorrectos.");
       return;
@@ -2186,6 +2216,24 @@ document.addEventListener("input", (event) => {
 });
 
 document.addEventListener("change", (event) => {
+  if (event.target.id === "login-user-select") {
+    const selectedEmail = event.target.value;
+    const user = data.users.find((u) => u.email === selectedEmail);
+    if (user) {
+      const emailInput = document.querySelector("#login-email");
+      const passwordInput = document.querySelector("#login-password");
+      const previewAvatar = document.querySelector(".login-preview-avatar");
+      const previewName = document.querySelector("#login-preview-name");
+      const previewRole = document.querySelector("#login-preview-role");
+
+      if (emailInput) emailInput.value = user.email;
+      if (passwordInput) passwordInput.value = user.password || "123456";
+      if (previewAvatar) previewAvatar.textContent = user.initials || user.name.slice(0, 2).toUpperCase();
+      if (previewName) previewName.textContent = user.name;
+      if (previewRole) previewRole.textContent = roleLabel(user.role);
+    }
+    return;
+  }
   const guidedForm = event.target.closest("form[data-guided-workflow]");
   if (guidedForm) updateGuidedWorkflow(guidedForm);
   if (event.target.matches('[data-submit="visit"] [name="assignmentId"]')) {
@@ -2213,17 +2261,6 @@ document.addEventListener("change", (event) => {
     updateGuidedWorkflow(form);
     return;
   }
-  if (event.target.id !== "role-switch") return;
-  const role = event.target.value;
-  const user = data.users.find((item) => item.role === role);
-  if (!user) {
-    toast("No hay una cuenta de demostracion disponible para ese rol.");
-    render();
-    return;
-  }
-  currentView = "dashboard";
-  saveSession(user);
-  render();
 });
 
 document.addEventListener("click", async (event) => {

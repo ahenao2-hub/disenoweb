@@ -1,4 +1,4 @@
-# Aplicacion SIGPRA
+﻿# Aplicacion SIGPRA
 
 Aplicacion web funcional tipo MVP para el producto final de SIGPRA.
 Incluye frontend web y backend API REST con Node.js, Express, TypeScript y organizacion MVC.
@@ -86,4 +86,11 @@ La capa backend se encuentra en `src/`:
 
 ## Alcance tecnico
 
-Esta version funciona con un backend API REST en Node.js/Express/TypeScript y tambien conserva modo local de respaldo para demostracion inmediata. Los datos se sincronizan contra una persistencia JSON local del servidor; los archivos binarios y las notificaciones no se envian a terceros. El selector "Ver como" facilita la demostracion y no representa control de acceso de produccion. Para produccion, el siguiente paso es reemplazar la persistencia JSON por PostgreSQL, MongoDB y almacenamiento de archivos, usando los scripts incluidos en `Base_de_datos_SIGPRA`.
+Esta version funciona con un backend API REST en Node.js/Express/TypeScript y tambien conserva modo local de respaldo para demostracion inmediata. Los datos se sincronizan contra una persistencia JSON local del servidor; los archivos binarios y las notificaciones no se envian a terceros. Por seguridad, el selector "Ver como" fue retirado del panel lateral para que cada sesion mantenga estrictamente la identidad y permisos del usuario autenticado; para cambiar de rol o usuario se debe cerrar sesion e ingresar desde el menu de inicio. Para produccion, el siguiente paso es reemplazar la persistencia JSON por PostgreSQL, MongoDB y almacenamiento de archivos, usando los scripts incluidos en `Base_de_datos_SIGPRA`.
+
+
+## Novedades de Interfaz y Acceso
+- **Diseño split de 2 columnas en el inicio**: Tarjeta amplia con imagen institucional en el lateral izquierdo (`login-photo.jpg`) y formulario en el lateral derecho.
+- **Selector de usuario en lista (`<select>`)**: Sustitución de los botones de acceso por una lista desplegable agrupada por roles (Coordinación, Dirección de Programa, Docentes Asesores y Estudiantes) para seleccionar con qué usuario ingresar. Al seleccionar un usuario se actualizan automáticamente sus credenciales y previsualización.
+- **Tamaño de tipografía optimizado a 12px**: Interfaz compacta y estilizada en el menú de inicio.
+- **Mayor seguridad**: Eliminación del cambio arbitrario de roles en caliente desde la barra lateral.
