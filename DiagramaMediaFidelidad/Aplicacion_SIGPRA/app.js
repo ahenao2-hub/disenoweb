@@ -332,7 +332,7 @@ function moneyDate(value) {
 function toast(message) {
   document.querySelector(".sigpra-toast")?.remove();
   const node = document.createElement("div");
-  node.className = "sigpra-toast";
+  node.className = "sigpra-toast tw-shadow-2xl tw-transition-all";
   node.setAttribute("role", "status");
   node.textContent = message;
   document.body.appendChild(node);
@@ -364,7 +364,7 @@ function statusTag(status) {
   const warn = ["PENDIENTE", "CONFIGURACION", "DEVUELTA", "BORRADOR"];
   const bad = ["RECHAZADA", "VENCIDO", "CANCELADA", "INACTIVA"];
   const cls = ok.includes(status) ? "ok" : warn.includes(status) ? "warn" : bad.includes(status) ? "bad" : "";
-  return `<span class="badge rounded-pill tag ${cls}">${escapeHtml(status)}</span>`;
+  return `<span class="badge rounded-pill tag ${cls} tw-inline-flex tw-items-center tw-transition-transform hover:tw-scale-105 tw-cursor-default">${escapeHtml(status)}</span>`;
 }
 
 function agreementStatus(agreement) {
@@ -502,7 +502,7 @@ function renderNavigation(nav) {
       ? `<span class="nav-heading">${escapeHtml(item.group)}</span>`
       : "";
     currentGroup = item.group;
-    return `${heading}<button class="${item.id === currentView ? "active" : ""}" data-view="${item.id}" ${item.id === currentView ? 'aria-current="page"' : ""}>${escapeHtml(item.label)}</button>`;
+    return `${heading}<button class="${item.id === currentView ? "active" : ""} tw-transition-transform hover:tw-translate-x-1.5" data-view="${item.id}" ${item.id === currentView ? 'aria-current="page"' : ""}>${escapeHtml(item.label)}</button>`;
   }).join("");
 }
 
@@ -545,7 +545,7 @@ function renderModuleCards(user) {
       </div>
       <div class="module-grid">
         ${modules.map((item) => `
-          <button class="module-card" type="button" data-view="${item.id}">
+          <button class="module-card tw-transition-all hover:tw--translate-y-1 hover:tw-shadow-xl" type="button" data-view="${item.id}">
             <span class="module-card-heading">
               <strong>${escapeHtml(item.label)}</strong>
               <span aria-hidden="true">→</span>
@@ -569,17 +569,17 @@ function viewTitle(view, role) {
   }
   return {
     dashboard: "Resumen de coordinacion",
-    periods: "CU-01 Programar periodo de practica",
-    agreements: "CU-02 Gestionar convenios y plazas",
-    assignments: "CU-03 Asignar practicante a plaza y docente asesor",
-    reports: "CU-07 Consultar estado consolidado de practicas",
+    periods: "Programar periodo de practica",
+    agreements: "Gestionar convenios y plazas",
+    assignments: "Asignar practicante a plaza y docente asesor",
+    reports: "Consultar estado consolidado de practicas",
     audit: "Auditoria",
-    "student-activities": "CU-04 Registrar actividad ejecutada y soportes",
+    "student-activities": "Registrar actividad ejecutada y soportes",
     "student-evidence": "Evidencias y soportes",
     "student-validations": "Estado de validaciones",
     "student-progress": "Avance de practica",
-    "teacher-validations": "CU-05 Validar actividades reportadas",
-    "teacher-visits": "CU-06 Realizar visita de acompanamiento y evaluar"
+    "teacher-validations": "Validar actividades reportadas",
+    "teacher-visits": "Realizar visita de acompanamiento y evaluar"
   }[view] || "SIGPRA";
 }
 
@@ -649,11 +649,11 @@ function renderLogin() {
   app.innerHTML = `
     <main class="login-page">
       <section class="login-card">
-        <div class="login-photo-side">
-          <img
-            src="login-photo.jpg"
-            alt="SIGPRA - Gestión de Prácticas Académicas"
-            class="login-photo-img"
+        <div class="login-photo-side tw-overflow-hidden">
+          <img
+            src="login-photo.jpg"
+            alt="SIGPRA - Gestión de Prácticas Académicas"
+            class="login-photo-img tw-transition-transform tw-duration-700 hover:tw-scale-105"
             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80';"
           />
           <div class="login-photo-caption">
@@ -687,7 +687,7 @@ function renderLogin() {
             <label class="full-field">Clave
               <input id="login-password" name="password" type="password" value="${escapeHtml(defaultUser?.password || "123456")}" required class="form-control" />
             </label>
-            <button class="button primary full-field btn btn-primary" type="submit">Entrar</button>
+            <button class="button primary full-field btn btn-primary tw-py-2.5 tw-shadow-md hover:tw-shadow-lg tw-transition-all hover:tw-scale-[1.01] active:tw-scale-[0.99] tw-font-medium" type="submit">Entrar</button>
           </form>
         </div>
       </section>
@@ -736,7 +736,7 @@ function renderDashboard(user) {
         <h2>Acciones</h2>
         <p class="muted">Continua la gestion del periodo.</p>
         <div class="toolbar">
-          <button class="btn btn-primary button primary" data-view="assignments">Asignar practicantes</button>
+          <button class="btn btn-primary button primary tw-shadow-sm hover:tw-shadow-md hover:tw-scale-[1.02] active:tw-scale-[0.98] tw-transition-all" data-view="assignments">Asignar practicantes</button>
         </div>
       </article>
     </section>
@@ -764,7 +764,7 @@ function renderDirectorHome(user) {
         <h2>Acciones</h2>
         <p class="muted">Revisa el estado consolidado del periodo.</p>
         <div class="toolbar">
-          <button class="btn btn-primary button primary" data-view="reports">Ver consolidado de practicas</button>
+          <button class="btn btn-primary button primary tw-shadow-sm hover:tw-shadow-md hover:tw-scale-[1.02] active:tw-scale-[0.98] tw-transition-all" data-view="reports">Ver consolidado de practicas</button>
         </div>
       </article>
     </section>
@@ -791,7 +791,8 @@ function renderTeacherHome(user) {
 
 function metricCard(label, value, helper) {
   return `
-    <article class="card">
+    <article class="card tw-transition-all hover:tw-shadow-md hover:tw--translate-y-0.5">
+
       <p class="muted">${escapeHtml(label)}</p>
       <span class="metric">${escapeHtml(value)}</span>
       <p class="muted">${escapeHtml(helper)}</p>
@@ -1135,7 +1136,7 @@ function renderStudentActivities(user) {
   return `
     <section class="stack">
       <article class="card full">
-        <h2>Nueva bitacora (CU-04)</h2>
+        <h2>Nueva bitacora de actividades</h2>
         <p class="muted">Registra la actividad realizada, las horas y sus soportes. Puedes guardar un borrador o enviarlo al docente asesor.</p>
         ${assignment ? modalForm("activity") : `<div class="empty">Necesitas una asignacion activa para registrar actividades.</div>`}
       </article>

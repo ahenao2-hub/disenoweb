@@ -12,6 +12,16 @@
     />
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Tailwind CSS configurado para convivir con Bootstrap -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        prefix: 'tw-',
+        corePlugins: {
+          preflight: false, // Fundamental: evita sobreescribir los estilos y reinicios base de Bootstrap
+        },
+      };
+    </script>
   </head>
   <body>
     <div id="app"></div>

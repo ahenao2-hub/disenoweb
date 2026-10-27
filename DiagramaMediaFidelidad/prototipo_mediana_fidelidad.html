@@ -319,7 +319,7 @@
 
           <!-- Paso 19: mensaje de confirmacion -->
           <div class="panel" id="panelExito" style="display:none;">
-            <div class="notice"><strong>Asignacion registrada correctamente.</strong> Se notifico al estudiante, al docente asesor y la informacion quedo disponible para la institucion receptora. El estudiante ya puede iniciar el registro de actividades (CU-04).</div>
+            <div class="notice"><strong>Asignacion registrada correctamente.</strong> Se notifico al estudiante, al docente asesor y la informacion quedo disponible para la institucion receptora. El estudiante ya puede iniciar el registro de actividades.</div>
             <div class="actions"><button class="primary" type="button" onclick="cu03Reset()">Nueva asignacion</button></div>
           </div>
 
@@ -343,7 +343,7 @@
       <!-- CU-04: Registrar actividad ejecutada y soportes -->
       <section class="screen" id="bitacora">
         <div class="panel">
-          <h2>Nueva bitacora (CU-04)</h2>
+          <h2>Nueva bitacora de actividades</h2>
           <p class="eyebrow">Paso 2: asignacion activa - Institucion Educativa Central, periodo 2026-2.</p>
           <form onsubmit="return handleAction(event,'Actividad guardada y enviada a validacion del docente asesor.','validaciones')">
             <label>Fecha de la actividad<input type="date" required></label>
@@ -645,18 +645,18 @@
 
     const titles = {
       'inicio-coordinador': 'Resumen de coordinacion',
-      'periodos': 'CU-01 Programar periodo de practica',
-      'convenios': 'CU-02 Gestionar convenios y plazas',
-      'asignaciones': 'CU-03 Asignar practicante a plaza y docente asesor',
-      'consolidado': 'CU-07 Consultar estado consolidado de practicas',
+      'periodos': 'Programar periodo de practica',
+      'convenios': 'Gestionar convenios y plazas',
+      'asignaciones': 'Asignar practicante a plaza y docente asesor',
+      'consolidado': 'Consultar estado consolidado de practicas',
       'inicio-estudiante': 'Resumen de practica',
       'bitacora': 'Mi bitacora',
       'evidencias': 'Evidencias',
       'validaciones': 'Validaciones',
       'reportes': 'Reportes',
       'inicio-docente': 'Resumen de docente asesor',
-      'validar': 'CU-05 Validar actividades reportadas',
-      'visitas': 'CU-06 Realizar visita de acompanamiento y evaluar',
+      'validar': 'Validar actividades reportadas',
+      'visitas': 'Realizar visita de acompanamiento y evaluar',
       'inicio-director': 'Resumen de direccion'
     };
 
