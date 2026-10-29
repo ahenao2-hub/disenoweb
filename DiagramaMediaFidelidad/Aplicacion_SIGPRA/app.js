@@ -2469,7 +2469,7 @@ function modalForm(type, id) {
       </form>`;
   }
   if (type === "evidence") {
-    const assignment = data.assignments.find((item) => item.studentId === user.id && item.status === "ACTIVA");
+    const assignment = data.assignments.find((item) => item.studentId === user?.id && item.status === "ACTIVA");
     const activities = assignment ? data.activities.filter((item) => item.assignmentId === assignment.id) : [];
     return `
       <form class="form-grid" data-submit="evidence">
@@ -2562,7 +2562,7 @@ function modalForm(type, id) {
       </form>`;
   }
   if (type === "visit") {
-    const assignments = data.assignments.filter((item) => item.teacherId === user.id && item.status === "ACTIVA");
+    const assignments = data.assignments.filter((item) => item.teacherId === user?.id && item.status === "ACTIVA");
     return `
       <form class="form-grid guided-workflow" data-guided-workflow data-submit="visit">
         <article class="card full workflow-step" data-workflow-step>
