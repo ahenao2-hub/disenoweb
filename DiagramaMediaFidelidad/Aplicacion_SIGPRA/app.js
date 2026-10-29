@@ -1,4 +1,4 @@
-﻿const STORAGE_KEY = "sigpra_mvp_data_v1";
+const STORAGE_KEY = "sigpra_mvp_data_v1";
 const SESSION_KEY = "sigpra_mvp_session_v1";
 const API_BASE = "/api";
 
@@ -2377,25 +2377,51 @@ function modalForm(type, id) {
   if (type === "activity") {
     const activity = id ? data.activities.find((item) => item.id === Number(id)) : null;
     return `
-      <form class="form-grid guided-workflow" data-guided-workflow data-submit="activity" data-id="${id || ""}">
+      <form class="form-grid" data-submit="activity" data-id="${id || ""}">
         ${activity?.observation ? `<div class="alert alert-warning notice warning full-field">Observacion del docente: ${escapeHtml(activity.observation)}</div>` : ""}
-        <article class="card full workflow-step" data-workflow-step>
-          <h3><span class="step-number">1</span> Datos de la actividad</h3>
-          <label>Fecha de la actividad<input class="form-control" name="date" type="date" value="${escapeHtml(activity?.date || "")}" required></label>
-          <label>Horas ejecutadas<input class="form-control" name="hours" type="number" min="0.5" max="24" step="0.5" value="${escapeHtml(activity?.hours || "")}" required></label>
-          <label class="full-field">Tipo de actividad
-            <input class="form-control" name="type" list="activity-types" value="${escapeHtml(activity?.type || "")}" required>
-            <datalist id="activity-types"><option>Planeacion de clase</option><option>Refuerzo pedagogico</option><option>Reunion con docente titular</option></datalist>
-          </label>
-          <label class="full-field">Descripcion<textarea class="form-control" name="description" required>${escapeHtml(activity?.description || "")}</textarea></label>
+        <article class="card full">
+          <h3 class="d-flex align-items-center gap-2 mb-3"><span class="step-number">1</span> Datos de la actividad</h3>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Fecha de la actividad <span class="text-danger">*</span></label>
+              <input class="form-control" name="date" type="date" value="${escapeHtml(activity?.date || "")}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Horas ejecutadas <span class="text-danger">*</span> <small class="text-muted fw-normal">(Máx. 24h por registro)</small></label>
+              <input class="form-control" name="hours" type="number" min="0.5" max="24" step="0.5" placeholder="Ej: 4.0 (Máx. 24h)" value="${escapeHtml(activity?.hours || "")}" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Tipo de actividad <span class="text-danger">*</span></label>
+              <input class="form-control" name="type" list="activity-types" placeholder="Seleccione o escriba el tipo de actividad" value="${escapeHtml(activity?.type || "")}" required>
+              <datalist id="activity-types">
+                <option>Planeacion de clase</option>
+                <option>Refuerzo pedagogico</option>
+                <option>Reunion con docente titular</option>
+                <option>Acompanamiento en aula</option>
+                <option>Diseno de material didactico</option>
+                <option>Evaluacion y retroalimentacion</option>
+              </datalist>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Descripcion de la actividad <span class="text-danger">*</span></label>
+              <textarea class="form-control" name="description" rows="3" placeholder="Describe los logros, objetivos y actividades desarrolladas en la jornada..." required>${escapeHtml(activity?.description || "")}</textarea>
+            </div>
+          </div>
         </article>
-        <article class="card full workflow-step" data-workflow-step hidden>
-          <h3><span class="step-number">2</span> Soportes y envio</h3>
-          <label class="full-field">Soportes o evidencias<input class="form-control" name="files" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple></label>
-          <div class="alert alert-warning notice warning full-field">El envio requiere al menos un soporte. Se permiten PDF, imagenes y documentos Office de hasta 10 MB cada uno. En este prototipo se persiste la referencia y el nombre de archivo, no el contenido binario.</div>
-          <div class="toolbar">
-            <button class="btn btn-outline-secondary button" type="submit" name="status" value="BORRADOR">Guardar como borrador</button>
-            <button class="btn btn-primary button primary" type="submit" name="status" value="PENDIENTE">Enviar a validacion</button>
+        <article class="card full mt-3">
+          <h3 class="d-flex align-items-center gap-2 mb-3"><span class="step-number">2</span> Soportes y envio</h3>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Soportes o evidencias de la actividad</label>
+            <input class="form-control" name="files" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple>
+            <div class="form-text text-muted">Formatos permitidos: PDF, JPG, PNG, DOC y DOCX de hasta 10 MB cada uno.</div>
+          </div>
+          <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-3">
+            <span class="fs-5">ℹ️</span>
+            <div><strong>Requisito de envío:</strong> Para <em>Enviar a validación</em> se requiere adjuntar al menos un archivo de soporte. Si no los tienes a mano aún, puedes pulsar <strong>Guardar como borrador</strong> para guardar tu avance y completarlo después.</div>
+          </div>
+          <div class="toolbar d-flex justify-content-end gap-2 pt-3 border-top">
+            <button class="btn btn-outline-secondary button px-3" type="submit" name="status" value="BORRADOR">💾 Guardar como borrador</button>
+            <button class="btn btn-primary button primary px-4 fw-bold" type="submit" name="status" value="PENDIENTE">📤 Enviar a validacion</button>
           </div>
         </article>
       </form>`;
