@@ -22,8 +22,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 15px;
+  font-family: Verdana, Arial, Calibri, sans-serif;
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -40,11 +40,15 @@ button {
 
 /* Conservar la escala de SIGPRA sobre la base de Bootstrap. */
 h2 {
-  font-size: 1.5em;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
 }
 
 h3 {
-  font-size: 1.17em;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 select.form-select {
@@ -200,7 +204,7 @@ input.form-check-input[type="radio"] {
 
 .subtitle {
   margin: 6px 0 0;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .userbox {
@@ -278,7 +282,8 @@ input.form-check-input[type="radio"] {
   align-items: center;
   justify-content: center;
   min-height: 40px;
-  padding: 9px 14px;
+  padding: 12px 20px;
+  font-size: 16px !important;
   font-weight: 700;
 }
 
@@ -555,7 +560,7 @@ textarea {
 }
 
 body {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Verdana, Arial, Calibri, sans-serif;
 }
 
 .login-page {
@@ -655,7 +660,7 @@ body {
 
 .content {
   width: 100%;
-  max-width: 1252px;
+  max-width: 1680px;
   margin: 0 auto;
   padding: 30px 36px;
 }
@@ -665,7 +670,7 @@ body {
 }
 
 .topbar h1 {
-  font-size: 27px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -965,7 +970,7 @@ input[type="radio"] {
 }
 
 .content {
-  max-width: 1252px;
+  max-width: 1680px;
 }
 
 .workflow-form {
@@ -1031,7 +1036,7 @@ input[type="radio"] {
   border-radius: 50%;
   color: var(--blue);
   background: #e8f0ff;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .assignment-step .muted {
@@ -1141,7 +1146,7 @@ input[type="radio"] {
 }
 
 .module-card-heading strong {
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .module-card-heading span {
@@ -1213,9 +1218,9 @@ input[type="radio"] {
 .login-card {
   display: grid !important;
   grid-template-columns: 1fr 1.15fr;
-  width: min(880px, 95vw) !important;
-  max-width: 880px !important;
-  min-height: 520px;
+  width: min(1080px, 95vw) !important;
+  max-width: 1080px !important;
+  min-height: 600px;
   margin: 0 auto;
   padding: 0 !important;
   border-radius: 14px;
@@ -1264,13 +1269,13 @@ input[type="radio"] {
 
 .login-photo-caption p {
   margin: 0;
-  font-size: 12px !important;
+  font-size: 14px !important;
   color: #d8e6f3;
   line-height: 1.45;
 }
 
 .login-form-side {
-  padding: 34px 30px;
+  padding: 42px 46px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1291,7 +1296,7 @@ input[type="radio"] {
 .login-card small,
 .login-card option,
 .login-card optgroup {
-  font-size: 12px !important;
+  font-size: 14px !important;
 }
 
 .login-brand {
@@ -1299,19 +1304,19 @@ input[type="radio"] {
 }
 
 .login-brand strong {
-  font-size: 17px !important;
+  font-size: 24px !important;
   font-weight: 800;
   color: var(--blue);
 }
 
 .login-brand span {
-  font-size: 11px !important;
+  font-size: 14px !important;
   color: var(--muted);
   display: block;
 }
 
 .login-card h2 {
-  font-size: 16px !important;
+  font-size: 20px !important;
   font-weight: 700;
   margin: 0 0 4px;
 }
@@ -1332,16 +1337,16 @@ input[type="radio"] {
 }
 
 .login-preview-avatar {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--teal);
   color: white;
-  font-size: 11px !important;
+  font-size: 14px !important;
   font-weight: 700;
 }
 
@@ -1352,12 +1357,12 @@ input[type="radio"] {
 }
 
 .login-preview-info strong {
-  font-size: 12px !important;
+  font-size: 14px !important;
   color: var(--ink);
 }
 
 .login-preview-info span {
-  font-size: 11px !important;
+  font-size: 14px !important;
   color: var(--muted);
 }
 
@@ -1370,12 +1375,14 @@ input[type="radio"] {
 .login-card .form-select {
   padding: 7px 10px;
   height: auto;
-  min-height: 34px;
+  min-height: 44px;
+  font-size: 15px !important;
 }
 
 .login-card button[type="submit"] {
   margin-top: 6px;
-  padding: 9px 14px;
+  padding: 12px 20px;
+  font-size: 16px !important;
   font-weight: 600;
 }
 
@@ -2141,4 +2148,278 @@ input[type="radio"] {
 }
 .border-purple {
   border-color: #d8b4fe !important;
+}
+
+/* ==========================================================================
+   MEJORAS DE ACCESIBILIDAD, CONTRASTE Y TIPOGRAFIA (SOLICITADAS)
+   - Tipografía principal Sans-Serif: Verdana, Arial, Calibri, sans-serif
+   - Escala: Títulos 18px, Subtítulos 15px, Demás contenido 13px
+   - Letra negra de alto contraste en zonas con color (métrica, badges, chips)
+   - Aprovechamiento amplio del espacio del Dashboard en pantalla (max-width fluido)
+   ========================================================================== */
+
+/* 1. Fuente Sans-Serif universal y legible */
+html, body, button, input, select, textarea, table, .badge, .btn {
+  font-family: Verdana, Arial, Calibri, sans-serif !important;
+}
+
+/* 2. Escala tipográfica exacta */
+h1, .h1, .topbar h1, .modal-title, .brand strong {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  color: #111827 !important;
+}
+
+h2, .h2, .card h2, .section-title, .card-title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  color: #111827 !important;
+}
+
+h3, .h3, .subtitle, .card h3, .section-subtitle, .card-subtitle, p.subtitle {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: #1f2937 !important;
+}
+
+/* Demás contenido a 13px */
+body, p, span, a, input, select, textarea, button, td, th, label, .table, .form-control, .form-select, .btn, .nav button {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 3. Expansión del Dashboard y uso del espacio */
+.content {
+  width: 100% !important;
+  max-width: 1680px !important;
+  margin: 0 auto;
+}
+
+.card.full {
+  width: 100% !important;
+}
+
+/* 4. Letra negra y alto contraste en métricas y zonas de color */
+.card h2.text-warning,
+.card h2.text-success,
+.card h2.text-primary,
+.card h2.text-danger,
+.card h2.text-info,
+.metric.text-primary,
+.metric.text-warning,
+.metric.text-success,
+.metric.text-danger {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  font-size: 26px !important;
+}
+
+/* Títulos de las tarjetas métricas en negro nítido */
+.card .text-muted.text-uppercase,
+.card .small.text-uppercase {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Badges con texto negro de alto contraste sobre fondos de color */
+.badge.bg-warning,
+.badge.bg-warning-subtle,
+.badge-warning,
+.tag.warn {
+  background-color: #fef08a !important;
+  color: #000000 !important;
+  border: 1px solid #ca8a04 !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-info,
+.badge.bg-info-subtle,
+.badge-info {
+  background-color: #bae6fd !important;
+  color: #000000 !important;
+  border: 1px solid #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-success,
+.badge.bg-success-subtle,
+.badge-success,
+.tag.ok {
+  background-color: #bbf7d0 !important;
+  color: #052e16 !important;
+  border: 1px solid #16a34a !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-danger,
+.badge.bg-danger-subtle,
+.badge-danger,
+.tag.bad {
+  background-color: #fecaca !important;
+  color: #450a0a !important;
+  border: 1px solid #dc2626 !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-primary,
+.badge.bg-primary-subtle {
+  background-color: #bfdbfe !important;
+  color: #000000 !important;
+  border: 1px solid #2563eb !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-secondary,
+.badge.bg-secondary-subtle {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+  font-weight: 600 !important;
+}
+
+/* Chips de filtro rápido por estado con texto negro legible */
+#director-status-chips .btn,
+.status-filter-chip {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+}
+
+#director-status-chips .btn-warning {
+  background-color: #fef08a !important;
+  border-color: #ca8a04 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+#director-status-chips .btn-info {
+  background-color: #bae6fd !important;
+  border-color: #0284c7 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+#director-status-chips .btn-outline-warning,
+#director-status-chips .btn-outline-info,
+#director-status-chips .btn-outline-success,
+#director-status-chips .btn-outline-primary,
+#director-status-chips .btn-outline-danger,
+#director-status-chips .btn-outline-secondary {
+  color: #111827 !important;
+  border-color: #94a3b8 !important;
+  background-color: #ffffff !important;
+}
+
+#director-status-chips .btn-outline-warning:hover,
+#director-status-chips .btn-outline-info:hover,
+#director-status-chips .btn-outline-success:hover,
+#director-status-chips .btn-outline-primary:hover,
+#director-status-chips .btn-outline-danger:hover,
+#director-status-chips .btn-outline-secondary:hover {
+  background-color: #f1f5f9 !important;
+  color: #000000 !important;
+}
+
+/* ==========================================================================
+   MEJORAS ADICIONALES DE LEGIBILIDAD, LOGIN AMPLIADO Y BOTÓN CERRAR SESIÓN
+   ========================================================================== */
+
+/* Botón Cerrar Sesión en la barra superior */
+.topbar [data-action="logout"] {
+  color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+  border: 1.5px solid #f87171 !important;
+  transition: all 0.15s ease-in-out;
+}
+.topbar [data-action="logout"]:hover {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+/* Evitar letras diminutas en textos secundarios (mínimo 13.5px - 14px) */
+small, .small, .text-muted.small, div.text-muted.small {
+  font-size: 13.5px !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+
+/* Tabla de solicitudes y tablas generales */
+table.table {
+  font-size: 14px !important;
+}
+
+table.table thead th {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  background-color: #f8fafc !important;
+  padding: 12px 14px !important;
+}
+
+table.table tbody td {
+  font-size: 14px !important;
+  color: #111827 !important;
+  padding: 12px 14px !important;
+  vertical-align: middle !important;
+}
+
+/* Enlaces de soportes (Matrícula, EPS/ARL, Paz y Salvo) */
+table.table button[data-action="preview-doc"] {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  text-decoration: underline !important;
+  padding: 3px 0 !important;
+}
+table.table button[data-action="preview-doc"]:hover {
+  color: #1d4ed8 !important;
+}
+
+/* Botón de acción en la tabla (Ver Detalle / Evaluar) */
+table.table button[data-action="open-review-modal"] {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+}
+
+/* Badges con mayor tamaño y legibilidad */
+.badge {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  padding: 6px 12px !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Barra de búsqueda de la tabla */
+.table-search-bar input {
+  font-size: 14px !important;
+  min-height: 40px !important;
+  padding: 8px 14px !important;
+}
+
+/* Login amplio para pantallas de escritorio */
+@media (min-width: 769px) {
+  .login-card {
+    width: min(1080px, 94vw) !important;
+    max-width: 1080px !important;
+    min-height: 580px !important;
+  }
+  .login-photo-side {
+    min-height: 580px !important;
+  }
+}
+/* Fin de estilos */
+.eof-marker { display: none;
 }

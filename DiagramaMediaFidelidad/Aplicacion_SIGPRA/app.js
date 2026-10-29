@@ -593,6 +593,12 @@ function render() {
               </div>
               <span class="avatar">${escapeHtml(user.initials)}</span>
             </div>
+            <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 px-3 py-1.5 fw-bold shadow-sm" data-action="logout" title="Cerrar sesión segura" style="font-size: 13.5px; border-width: 1.5px; border-radius: 6px;">
+              <span>🚪</span>
+              <span>Cerrar sesión</span>
+            </button>
+            <div style="display:none">
+            </div>
           </div>
         </header>
         ${renderView(user)}
@@ -1104,11 +1110,11 @@ function metricCard(label, value, helper, targetView = null) {
   return `
     <article class="card ${interactiveClasses}" ${interactiveAttr}>
       <div class="d-flex justify-content-between align-items-center mb-1">
-        <p class="muted mb-0">${escapeHtml(label)}</p>
-        ${targetView ? '<span class="tw-text-xs tw-text-primary tw-font-semibold group-hover:tw-translate-x-0.5 tw-transition-transform">Ir &rarr;</span>' : ""}
+        <p class="text-dark fw-bold mb-0" style="font-size: 13px;">${escapeHtml(label)}</p>
+        ${targetView ? '<span class="tw-text-xs tw-text-dark tw-font-bold group-hover:tw-translate-x-0.5 tw-transition-transform">Ir &rarr;</span>' : ""}
       </div>
-      <span class="metric text-primary">${escapeHtml(value)}</span>
-      <p class="muted mb-0 tw-text-xs">${escapeHtml(helper)}</p>
+      <span class="metric text-dark fw-bold" style="font-size: 26px; color: #111827 !important;">${escapeHtml(value)}</span>
+      <p class="text-secondary mb-0" style="font-size: 13px;">${escapeHtml(helper)}</p>
     </article>
   `;
 }
@@ -4205,36 +4211,36 @@ function renderDirectorRequests(user) {
       <div class="row g-3">
         <div class="col-6 col-md-3">
           <div class="card p-3 border-start border-4 border-warning shadow-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'ring-2 ring-warning' : ''}" data-status-filter="PENDIENTE_REVISION" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar pendientes" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-muted small text-uppercase fw-bold">Pendientes de Revision</span>
+            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Pendientes de Revisión</span>
             <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-warning">${pending.length}</h2>
+              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${pending.length}</h2>
               <span class="fs-4">⏳</span>
             </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card p-3 border-start border-4 border-success shadow-sm ${directorStatusFilter === 'APROBADA' ? 'ring-2 ring-success' : ''}" data-status-filter="APROBADA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar aprobadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-muted small text-uppercase fw-bold">Aprobadas (Habilitados)</span>
+            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Aprobadas (Habilitados)</span>
             <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-success">${approved.length}</h2>
+              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${approved.length}</h2>
               <span class="fs-4">✅</span>
             </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card p-3 border-start border-4 border-primary shadow-sm ${directorStatusFilter === 'DEVUELTA' ? 'ring-2 ring-primary' : ''}" data-status-filter="DEVUELTA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar devueltas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-muted small text-uppercase fw-bold">Devueltas p/ correccion</span>
+            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Devueltas p/ corrección</span>
             <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-primary">${returned.length}</h2>
+              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${returned.length}</h2>
               <span class="fs-4">↩️</span>
             </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card p-3 border-start border-4 border-danger shadow-sm ${directorStatusFilter === 'RECHAZADA' ? 'ring-2 ring-danger' : ''}" data-status-filter="RECHAZADA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar rechazadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-muted small text-uppercase fw-bold">Rechazadas</span>
+            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Rechazadas</span>
             <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-danger">${rejected.length}</h2>
+              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${rejected.length}</h2>
               <span class="fs-4">❌</span>
             </div>
           </div>
@@ -4256,12 +4262,12 @@ function renderDirectorRequests(user) {
 
         <!-- Chips de Filtro Rápido por Estado Interactivos -->
         <div class="d-flex align-items-center gap-2 flex-wrap mb-3" id="director-status-chips">
-          <span class="small text-muted fw-bold">Filtrar por:</span>
-          <button class="btn btn-sm ${directorStatusFilter === 'ALL' ? 'btn-primary active text-white' : 'btn-outline-primary'} py-1 px-2" data-status-filter="ALL" style="font-size: 0.8rem;">Todos (${requests.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'btn-warning active text-dark fw-bold' : 'btn-outline-warning'} py-1 px-2" data-status-filter="PENDIENTE_REVISION" style="font-size: 0.8rem;">⏳ Pendientes (${pending.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'APROBADA' ? 'btn-success active text-white fw-bold' : 'btn-outline-success'} py-1 px-2" data-status-filter="APROBADA" style="font-size: 0.8rem;">✅ Aprobadas (${approved.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'DEVUELTA' ? 'btn-info active text-white fw-bold' : 'btn-outline-info'} py-1 px-2" data-status-filter="DEVUELTA" style="font-size: 0.8rem;">↩️ Devueltas (${returned.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'RECHAZADA' ? 'btn-danger active text-white fw-bold' : 'btn-outline-danger'} py-1 px-2" data-status-filter="RECHAZADA" style="font-size: 0.8rem;">❌ Rechazadas (${rejected.length})</button>
+          <span class="text-dark fw-bold" style="font-size: 13px;">Filtrar por:</span>
+          <button class="btn btn-sm ${directorStatusFilter === 'ALL' ? 'btn-dark active text-white fw-bold' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="ALL" style="font-size: 13px;">Todos (${requests.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'btn-warning active text-dark fw-bold border border-warning' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="PENDIENTE_REVISION" style="font-size: 13px;">⏳ Pendientes (${pending.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'APROBADA' ? 'btn-success active text-white fw-bold' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="APROBADA" style="font-size: 13px;">✅ Aprobadas (${approved.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'DEVUELTA' ? 'btn-info active text-dark fw-bold border border-info' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="DEVUELTA" style="font-size: 13px;">↩️ Devueltas (${returned.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'RECHAZADA' ? 'btn-danger active text-white fw-bold' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="RECHAZADA" style="font-size: 13px;">❌ Rechazadas (${rejected.length})</button>
         </div>
 
         <div class="table-wrap table-responsive">
@@ -4335,26 +4341,26 @@ function renderDirectorRequests(user) {
                   <tr data-status="${status}">
                     <td>${req ? '#' + req.id : '-'}</td>
                     <td>
-                      <strong>${escapeHtml(student.name)}</strong>
-                      <div class="text-muted small">${escapeHtml(student.code || student.email)} • Semestre ${student.semester || 8}</div>
+                      <strong class="d-block" style="font-size: 14.5px; color: #111827;">${escapeHtml(student.name)}</strong>
+                      <div class="text-secondary" style="font-size: 13.5px; font-weight: 500;">${escapeHtml(student.code || student.email)} • Semestre ${student.semester || 8}</div>
                     </td>
                     <td>
-                      <div>${escapeHtml(period?.program || 'Programa UDI')}</div>
-                      <small class="text-muted">${escapeHtml(req?.level || period?.level || 'VIII semestre')}</small>
+                      <div style="font-size: 14px; font-weight: 600; color: #111827;">${escapeHtml(period?.program || 'Programa UDI')}</div>
+                      <div class="text-secondary" style="font-size: 13.5px;">${escapeHtml(req?.level || period?.level || 'VIII semestre')}</div>
                     </td>
                     <td>${escapeHtml(req?.modality || 'No definida')}</td>
                     <td>
                       ${req ? `
-                        <button class="btn btn-sm btn-link p-0 d-block text-start text-primary" style="font-size: 0.8rem; text-decoration: none;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Certificado de Matrícula" data-filename="${escapeHtml(req.documents?.matricula?.name || 'matricula.pdf')}">📄 Matrícula 👁️</button>
-                        <button class="btn btn-sm btn-link p-0 d-block text-start text-primary" style="font-size: 0.8rem; text-decoration: none;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Afiliación EPS/ARL" data-filename="${escapeHtml(req.documents?.epsArl?.name || 'eps_arl.pdf')}">📄 EPS/ARL 👁️</button>
-                        <button class="btn btn-sm btn-link p-0 d-block text-start text-primary" style="font-size: 0.8rem; text-decoration: none;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Paz y Salvo Académico" data-filename="${escapeHtml(req.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}">📄 Paz y Salvo 👁️</button>
+                        <button class="btn btn-sm btn-link p-0 d-block text-start text-dark fw-semibold" style="font-size: 13px; text-decoration: underline;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Certificado de Matrícula" data-filename="${escapeHtml(req.documents?.matricula?.name || 'matricula.pdf')}">📄 Matrícula 👁️</button>
+                        <button class="btn btn-sm btn-link p-0 d-block text-start text-dark fw-semibold" style="font-size: 13px; text-decoration: underline;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Afiliación EPS/ARL" data-filename="${escapeHtml(req.documents?.epsArl?.name || 'eps_arl.pdf')}">📄 EPS/ARL 👁️</button>
+                        <button class="btn btn-sm btn-link p-0 d-block text-start text-dark fw-semibold" style="font-size: 13px; text-decoration: underline;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Paz y Salvo Académico" data-filename="${escapeHtml(req.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}">📄 Paz y Salvo 👁️</button>
                       ` : '<span class="text-muted small fst-italic">Pendiente de anexar</span>'}
                     </td>
-                    <td><small>${escapeHtml(req?.submittedAt || req?.updatedAt || 'No radicada')}</small></td>
+                    <td style="font-size: 13.5px;">${escapeHtml(req?.submittedAt || req?.updatedAt || 'No radicada')}</td>
                     <td><span class="badge ${badgeClass}">${escapeHtml(statusLabel)}</span></td>
                     <td class="text-end">
                       ${req ? `
-                        <button class="btn btn-sm ${buttonClass}" data-action="open-review-modal" data-id="${req.id}">
+                        <button class="btn btn-sm ${buttonClass} fw-bold" style="font-size: 13.5px; padding: 6px 12px;" data-action="open-review-modal" data-id="${req.id}">
                           ${actionButtonText}
                         </button>
                       ` : '<span class="text-muted small">Sin radicar</span>'}
