@@ -3598,6 +3598,7 @@ document.addEventListener("click", async (event) => {
   }
   if (action.dataset.action === "close-modal") {
     document.querySelector(".sigpra-modal-backdrop")?.remove();
+    document.body.classList.remove("has-official-letter");
   }
   if (action.dataset.action === "reset-demo") {
     data = structuredClone(seedData);
@@ -3615,7 +3616,10 @@ document.addEventListener("click", async (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") document.querySelector(".sigpra-modal-backdrop")?.remove();
+  if (event.key === "Escape") {
+    document.querySelector(".sigpra-modal-backdrop")?.remove();
+    document.body.classList.remove("has-official-letter");
+  }
 });
 
 initializeApi();
@@ -4522,8 +4526,18 @@ function renderNotificationBell(user) {
   `;
 }
 
+function printOfficialLetter() {
+  document.body.classList.add("has-official-letter");
+  window.print();
+}
+
+window.addEventListener("afterprint", () => {
+  document.body.classList.remove("has-official-letter");
+});
+
 function openOfficialPresentationLetterModal(assignmentId) {
   document.querySelector(".sigpra-modal-backdrop")?.remove();
+  document.body.classList.remove("has-official-letter");
   const assignment = (data.assignments || []).find(a => a.id === Number(assignmentId)) || (data.assignments || [])[0];
   if (!assignment) {
     toast("No se encontró registro de asignación formal para emitir la carta.", "warning");
@@ -4540,11 +4554,12 @@ function openOfficialPresentationLetterModal(assignmentId) {
   const todayStr = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
   const radicadoId = "UDI-PRAC-" + period.year + "-" + String(assignment.id).padStart(4, '0');
 
+  document.body.classList.add("has-official-letter");
   const backdrop = document.createElement("div");
-  backdrop.className = "sigpra-modal-backdrop";
+  backdrop.className = "sigpra-modal-backdrop official-letter-backdrop";
   backdrop.innerHTML = `
     <div class="sigpra-modal official-letter-modal">
-      <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+      <div class="sigpra-modal-header official-letter-modal-header d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
         <div class="d-flex align-items-center gap-2">
           <span class="fs-4">📜</span>
           <h3 class="mb-0 fw-bold fs-5 text-primary">Carta Oficial de Presentación del Practicante</h3>
@@ -4555,11 +4570,11 @@ function openOfficialPresentationLetterModal(assignmentId) {
       <div class="official-letter-paper" id="printable-official-letter">
         <div class="official-letter-header">
           <div class="d-flex align-items-center gap-3">
-            <img src="/assets/logo-sigpra.svg" alt="UDI" style="height: 48px;" onerror="this.style.display='none'" />
+            <img src="/assets/logo-sigpra.svg" alt="UDI" style="height: 42px;" onerror="this.style.display='none'" />
             <div>
-              <div style="font-size: 0.95rem; font-weight: 800; color: #004b87; letter-spacing: 0.5px;">UNIVERSIDAD DE INVESTIGACIÓN Y DESARROLLO — UDI</div>
-              <div style="font-size: 0.78rem; color: #475569; font-weight: 600;">FACULTAD DE INGENIERÍAS Y CIENCIAS BÁSICAS</div>
-              <div style="font-size: 0.72rem; color: #64748b;">COORDINACIÓN DE PRÁCTICAS ACADÉMICAS Y PROFESIONALES (SIGPRA)</div>
+              <div style="font-size: 0.92rem; font-weight: 800; color: #004b87; letter-spacing: 0.5px;">UNIVERSIDAD DE INVESTIGACIÓN Y DESARROLLO — UDI</div>
+              <div style="font-size: 0.76rem; color: #475569; font-weight: 600;">FACULTAD DE INGENIERÍAS Y CIENCIAS BÁSICAS</div>
+              <div style="font-size: 0.70rem; color: #64748b;">COORDINACIÓN DE PRÁCTICAS ACADÉMICAS Y PROFESIONALES (SIGPRA)</div>
             </div>
           </div>
           <div class="text-end">
@@ -4568,28 +4583,28 @@ function openOfficialPresentationLetterModal(assignmentId) {
         </div>
 
         <div class="official-letter-body">
-          <p class="mb-3 text-end small text-muted">Bucaramanga, ${todayStr}</p>
+          <p class="mb-2 text-end small text-muted">Bucaramanga, ${todayStr}</p>
 
-          <p class="mb-3">
+          <p class="mb-2">
             Señores:<br />
             <strong class="text-dark">${escapeHtml(institution.name)}</strong><br />
             <span class="text-muted small">Atención: Dirección de Gestión Humana / Coordinación de Prácticas</span><br />
             Ciudad
           </p>
 
-          <p class="mb-3">
+          <p class="mb-2">
             <strong>Asunto:</strong> Presentación formal del estudiante en Práctica Académica Formativa
           </p>
 
-          <p>
+          <p class="mb-2">
             Cordial saludo:
           </p>
 
-          <p>
+          <p class="mb-2">
             Por medio de la presente, la <strong>Universidad de Investigación y Desarrollo — UDI</strong> se complace en presentar de manera formal al(la) estudiante:
           </p>
 
-          <div class="p-3 my-3 bg-light rounded border">
+          <div class="p-2 my-2 bg-light rounded border official-letter-info-card">
             <div class="row g-2 small">
               <div class="col-sm-6"><strong>Estudiante:</strong> ${escapeHtml(student?.name)}</div>
               <div class="col-sm-6"><strong>Código Estudiantil:</strong> ${escapeHtml(student?.code || 'UDI-2026-001')}</div>
@@ -4598,15 +4613,15 @@ function openOfficialPresentationLetterModal(assignmentId) {
             </div>
           </div>
 
-          <p>
+          <p class="mb-2">
             El(La) estudiante ha culminado a satisfacción los créditos académicos prerrequisito y cuenta con la respectiva cobertura de afiliación en salud y riesgos laborales (ARL), encontrándose plenamente habilitado(a) por la Dirección de Programa para desarrollar sus labores en el periodo académico <strong>${period.year}-${period.semester}</strong>, con una intensidad mínima de <strong>${period.minHours || 320} horas formativas</strong>.
           </p>
 
-          <p>
+          <p class="mb-2">
             Para el debido acompañamiento, concertación del plan de trabajo y evaluación del desempeño institucional, la Universidad ha asignado como <strong>Docente Asesor</strong> al(la) profesor(a) <strong>${escapeHtml(teacher?.name || 'Asignado')}</strong> (${escapeHtml(teacher?.email || 'docente@udi.edu.co')}).
           </p>
 
-          <p>
+          <p class="mb-2">
             Agradecemos de antemano el valioso respaldo que su entidad brinda a nuestros futuros profesionales.
           </p>
 
@@ -4625,9 +4640,9 @@ function openOfficialPresentationLetterModal(assignmentId) {
             </div>
           </div>
 
-          <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="official-letter-stamp-row mt-3 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="letter-qr-stamp">
-              <span class="fs-4">🔐</span>
+              <span class="fs-5">🔐</span>
               <div>
                 <strong>Expediente Oficial Verificado</strong><br />
                 <span class="text-muted">Ley 30 de 1992 · Decreto 1075 de 2015</span>
@@ -4641,7 +4656,7 @@ function openOfficialPresentationLetterModal(assignmentId) {
       <div class="sigpra-modal-footer d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
         <span class="small text-muted">Documento oficial generado por SIGPRA UDI</span>
         <div class="d-flex gap-2">
-          <button class="btn btn-primary btn-sm fw-bold shadow-sm" type="button" onclick="window.print()">
+          <button class="btn btn-primary btn-sm fw-bold shadow-sm" type="button" onclick="printOfficialLetter()">
             🖨️ Imprimir Carta / Guardar PDF
           </button>
           <button class="btn btn-secondary btn-sm" type="button" data-action="close-modal">Cerrar</button>
@@ -4649,6 +4664,12 @@ function openOfficialPresentationLetterModal(assignmentId) {
       </div>
     </div>
   `;
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) {
+      backdrop.remove();
+      document.body.classList.remove("has-official-letter");
+    }
+  });
   document.body.appendChild(backdrop);
 }
 

@@ -1840,45 +1840,49 @@ input[type="radio"] {
 }
 .official-letter-paper {
   background: #ffffff;
-  padding: 48px 56px;
+  padding: 34px 44px;
   border: 1px solid #cbd5e1;
   box-shadow: 0 4px 20px rgba(0,0,0,0.06);
   font-family: "Georgia", "Cambria", serif;
   color: #1e293b;
-  line-height: 1.6;
+  line-height: 1.5;
   position: relative;
 }
 .official-letter-header {
   border-bottom: 2px solid #004b87;
-  padding-bottom: 16px;
-  margin-bottom: 28px;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .official-letter-body {
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   text-align: justify;
 }
 .official-letter-body p {
-  margin-bottom: 1.15rem;
+  margin-bottom: 0.85rem;
+}
+.official-letter-info-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 .official-letter-signatures {
-  margin-top: 48px;
+  margin-top: 32px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
 }
 .letter-signature-line {
   border-top: 1px solid #1e293b;
-  margin-top: 40px;
+  margin-top: 30px;
   padding-top: 6px;
   font-size: 0.82rem;
 }
 .letter-qr-stamp {
   border: 2px solid #004b87;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -1955,24 +1959,172 @@ input[type="radio"] {
 
 /* Impresión para Carta Oficial UDI */
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    size: letter portrait;
+    margin: 8mm 12mm;
   }
-  .official-letter-paper, .official-letter-paper * {
-    visibility: visible;
-  }
-  .official-letter-paper {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 20mm;
-    box-shadow: none;
-    border: none;
-  }
-  .sigpra-modal-footer, .btn-close, .navbar, .sidebar {
+
+  /* Ocultar toda la interfaz de la aplicación cuando la carta está abierta */
+  body:has(.official-letter-backdrop) > *:not(.official-letter-backdrop),
+  body:has(.official-letter-backdrop) #app,
+  body.has-official-letter > *:not(.official-letter-backdrop),
+  body.has-official-letter #app,
+  .sidebar,
+  .topbar,
+  .navbar,
+  .report-filters,
+  .toolbar,
+  .sigpra-modal-footer,
+  .official-letter-modal-header,
+  .btn-close,
+  [data-action="close-modal"],
+  .sigpra-toast {
     display: none !important;
+  }
+
+  /* Reset del fondo y del body */
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Desactivar posicionamiento modal y filtros de backdrop */
+  .official-letter-backdrop {
+    position: static !important;
+    display: block !important;
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .official-letter-modal {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Hoja oficial - Ajustada exactamente a 1 sola página Carta */
+  .official-letter-paper {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-family: "Georgia", "Cambria", "Times New Roman", serif !important;
+    font-size: 9.8pt !important;
+    line-height: 1.38 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .official-letter-header {
+    border-bottom: 2px solid #004b87 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 10px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .official-letter-header img {
+    height: 38px !important;
+    max-height: 38px !important;
+  }
+
+  .official-letter-body {
+    font-size: 9.8pt !important;
+    text-align: justify !important;
+  }
+
+  .official-letter-body p {
+    margin-bottom: 6px !important;
+    line-height: 1.35 !important;
+  }
+
+  .official-letter-info-card {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    padding: 6px 12px !important;
+    margin: 6px 0 !important;
+    font-size: 9.2pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .official-letter-signatures {
+    margin-top: 18px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 32px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .letter-signature-line {
+    border-top: 1.5px solid #0f172a !important;
+    margin-top: 26px !important;
+    padding-top: 4px !important;
+    font-size: 8.8pt !important;
+    line-height: 1.25 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .official-letter-stamp-row {
+    margin-top: 12px !important;
+    padding-top: 6px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .letter-qr-stamp {
+    border: 1.5px solid #004b87 !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    font-size: 7.8pt !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Evitar saltos de página no deseados en todos los hijos */
+  .official-letter-paper * {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
 
