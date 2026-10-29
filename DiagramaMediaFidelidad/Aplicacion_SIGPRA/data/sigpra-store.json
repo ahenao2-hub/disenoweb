@@ -81,6 +81,17 @@
       "initials": "VR",
       "code": "UDI-2026-005",
       "semester": 8
+    },
+    {
+      "id": 10,
+      "name": "ana francisca",
+      "email": "jobixiita@gmail.com",
+      "password": "123456",
+      "role": "ESTUDIANTE",
+      "initials": "AF",
+      "code": "udi 2026",
+      "semester": 8,
+      "enabledForAssignment": false
     }
   ],
   "periods": [
@@ -507,6 +518,186 @@
         "PRACTICA VII"
       ],
       "active": true
+    }
+  ],
+  "requests": [
+    {
+      "id": 1,
+      "studentId": 2,
+      "periodId": 1,
+      "level": "VIII semestre",
+      "modality": "Convenio institucional",
+      "placeId": 1,
+      "status": "APROBADA",
+      "documents": {
+        "matricula": {
+          "name": "matricula_laura.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-18"
+        },
+        "epsArl": {
+          "name": "arl_sura_laura.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-18"
+        },
+        "pazYSalvo": {
+          "name": "paz_y_salvo_laura.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-18"
+        }
+      },
+      "comments": "Solicitud radicada para realizar practica en Centro Educativo La Esperanza.",
+      "submittedAt": "2026-08-18 09:30",
+      "reviewedAt": "2026-08-19 14:15",
+      "reviewedBy": 4,
+      "justification": "Cumple con totalidad de créditos y documentación verificada.",
+      "createdAt": "2026-08-18 09:10",
+      "updatedAt": "2026-08-19 14:15"
+    },
+    {
+      "id": 2,
+      "studentId": 5,
+      "periodId": 1,
+      "level": "VIII semestre",
+      "modality": "Convenio institucional",
+      "placeId": 2,
+      "status": "APROBADA",
+      "documents": {
+        "matricula": {
+          "name": "matricula_miguel.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-19"
+        },
+        "epsArl": {
+          "name": "arl_positiva_miguel.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-19"
+        },
+        "pazYSalvo": {
+          "name": "paz_y_salvo_miguel.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-19"
+        }
+      },
+      "comments": "Interés en turno de la tarde.",
+      "submittedAt": "2026-08-19 10:00",
+      "reviewedAt": "2026-08-20 11:00",
+      "reviewedBy": 4,
+      "justification": "Documentación en regla.",
+      "createdAt": "2026-08-19 09:45",
+      "updatedAt": "2026-08-20 11:00"
+    },
+    {
+      "id": 3,
+      "studentId": 7,
+      "periodId": 1,
+      "level": "VIII semestre",
+      "modality": "Convenio institucional",
+      "placeId": 3,
+      "status": "PENDIENTE_REVISION",
+      "documents": {
+        "matricula": {
+          "name": "matricula_sofia.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-22"
+        },
+        "epsArl": {
+          "name": "eps_sanitas_sofia.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-22"
+        },
+        "pazYSalvo": {
+          "name": "paz_y_salvo_sofia.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-22"
+        }
+      },
+      "comments": "Solicitud pendiente de revision por Director de Programa.",
+      "submittedAt": "2026-08-22 15:40",
+      "createdAt": "2026-08-22 15:00",
+      "updatedAt": "2026-08-22 15:40"
+    },
+    {
+      "id": 4,
+      "studentId": 8,
+      "periodId": 1,
+      "level": "VIII semestre",
+      "modality": "Practica autogestionada",
+      "suggestedCompany": "Colegio Bilingüe San José",
+      "status": "BORRADOR",
+      "documents": {
+        "matricula": {
+          "name": "matricula_daniel.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-23"
+        }
+      },
+      "comments": "Borrador en curso. Pendiente anexar paz y salvo académico.",
+      "createdAt": "2026-08-23 11:20",
+      "updatedAt": "2026-08-23 11:25"
+    },
+    {
+      "id": 5,
+      "studentId": 9,
+      "periodId": 1,
+      "level": "VIII semestre",
+      "modality": "Convenio institucional",
+      "placeId": 4,
+      "status": "DEVUELTA",
+      "documents": {
+        "matricula": {
+          "name": "matricula_valentina.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-21"
+        },
+        "epsArl": {
+          "name": "eps_sura_valentina.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-21"
+        },
+        "pazYSalvo": {
+          "name": "paz_salvo_antiguo.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-08-21"
+        }
+      },
+      "comments": "Por favor revisar el documento de paz y salvo.",
+      "submittedAt": "2026-08-21 16:10",
+      "reviewedAt": "2026-08-22 09:00",
+      "reviewedBy": 4,
+      "justification": "El paz y salvo académico adjunto corresponde al periodo 2026-1. Debe adjuntar el paz y salvo vigente para 2026-2.",
+      "createdAt": "2026-08-21 15:30",
+      "updatedAt": "2026-08-22 09:00"
+    },
+    {
+      "id": 6,
+      "studentId": 10,
+      "periodId": 1,
+      "level": "VIII semestre",
+      "modality": "Convenio institucional",
+      "placeId": 2,
+      "status": "PENDIENTE_REVISION",
+      "documents": {
+        "matricula": {
+          "name": "matricula_ana_francisca.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-10-27 03:52"
+        },
+        "epsArl": {
+          "name": "eps_arl_ana_francisca.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-10-27 03:52"
+        },
+        "pazYSalvo": {
+          "name": "paz_y_salvo_ana_francisca.pdf",
+          "type": "application/pdf",
+          "uploadedAt": "2026-10-27 03:52"
+        }
+      },
+      "comments": "hacer mi practica",
+      "submittedAt": "2026-10-27 03:52",
+      "createdAt": "2026-10-27 03:52",
+      "updatedAt": "2026-10-27 03:52"
     }
   ]
 }

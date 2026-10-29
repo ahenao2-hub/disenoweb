@@ -125,6 +125,104 @@ const seedData = {
   visits: [
     { id: 1, assignmentId: 1, teacherId: 3, date: "2026-09-20", mode: "PRESENCIAL", attendance: true, observation: "Buen manejo del grupo. Se recomienda fortalecer el cierre de la actividad.", score: 4.4, status: "REGISTRADA" }
   ],
+  requests: [
+    {
+      id: 1,
+      studentId: 2,
+      periodId: 1,
+      level: "VIII semestre",
+      modality: "Convenio institucional",
+      placeId: 1,
+      status: "APROBADA",
+      documents: {
+        matricula: { name: "matricula_laura.pdf", type: "application/pdf", uploadedAt: "2026-08-18" },
+        epsArl: { name: "arl_sura_laura.pdf", type: "application/pdf", uploadedAt: "2026-08-18" },
+        pazYSalvo: { name: "paz_y_salvo_laura.pdf", type: "application/pdf", uploadedAt: "2026-08-18" }
+      },
+      comments: "Solicitud radicada para realizar practica en Centro Educativo La Esperanza.",
+      submittedAt: "2026-08-18 09:30",
+      reviewedAt: "2026-08-19 14:15",
+      reviewedBy: 4,
+      justification: "Cumple con totalidad de créditos y documentación verificada.",
+      createdAt: "2026-08-18 09:10",
+      updatedAt: "2026-08-19 14:15"
+    },
+    {
+      id: 2,
+      studentId: 5,
+      periodId: 1,
+      level: "VIII semestre",
+      modality: "Convenio institucional",
+      placeId: 2,
+      status: "APROBADA",
+      documents: {
+        matricula: { name: "matricula_miguel.pdf", type: "application/pdf", uploadedAt: "2026-08-19" },
+        epsArl: { name: "arl_positiva_miguel.pdf", type: "application/pdf", uploadedAt: "2026-08-19" },
+        pazYSalvo: { name: "paz_y_salvo_miguel.pdf", type: "application/pdf", uploadedAt: "2026-08-19" }
+      },
+      comments: "Interés en turno de la tarde.",
+      submittedAt: "2026-08-19 10:00",
+      reviewedAt: "2026-08-20 11:00",
+      reviewedBy: 4,
+      justification: "Documentación en regla.",
+      createdAt: "2026-08-19 09:45",
+      updatedAt: "2026-08-20 11:00"
+    },
+    {
+      id: 3,
+      studentId: 7,
+      periodId: 1,
+      level: "VIII semestre",
+      modality: "Convenio institucional",
+      placeId: 3,
+      status: "PENDIENTE_REVISION",
+      documents: {
+        matricula: { name: "matricula_sofia.pdf", type: "application/pdf", uploadedAt: "2026-08-22" },
+        epsArl: { name: "eps_sanitas_sofia.pdf", type: "application/pdf", uploadedAt: "2026-08-22" },
+        pazYSalvo: { name: "paz_y_salvo_sofia.pdf", type: "application/pdf", uploadedAt: "2026-08-22" }
+      },
+      comments: "Solicitud pendiente de revision por Director de Programa.",
+      submittedAt: "2026-08-22 15:40",
+      createdAt: "2026-08-22 15:00",
+      updatedAt: "2026-08-22 15:40"
+    },
+    {
+      id: 4,
+      studentId: 8,
+      periodId: 1,
+      level: "VIII semestre",
+      modality: "Practica autogestionada",
+      suggestedCompany: "Colegio Bilingüe San José",
+      status: "BORRADOR",
+      documents: {
+        matricula: { name: "matricula_daniel.pdf", type: "application/pdf", uploadedAt: "2026-08-23" }
+      },
+      comments: "Borrador en curso. Pendiente anexar paz y salvo académico.",
+      createdAt: "2026-08-23 11:20",
+      updatedAt: "2026-08-23 11:25"
+    },
+    {
+      id: 5,
+      studentId: 9,
+      periodId: 1,
+      level: "VIII semestre",
+      modality: "Convenio institucional",
+      placeId: 4,
+      status: "DEVUELTA",
+      documents: {
+        matricula: { name: "matricula_valentina.pdf", type: "application/pdf", uploadedAt: "2026-08-21" },
+        epsArl: { name: "eps_sura_valentina.pdf", type: "application/pdf", uploadedAt: "2026-08-21" },
+        pazYSalvo: { name: "paz_salvo_antiguo.pdf", type: "application/pdf", uploadedAt: "2026-08-21" }
+      },
+      comments: "Por favor revisar el documento de paz y salvo.",
+      submittedAt: "2026-08-21 16:10",
+      reviewedAt: "2026-08-22 09:00",
+      reviewedBy: 4,
+      justification: "El certificado de paz y salvo aportado corresponde al periodo 2025-2. Por favor adjuntar constancia de créditos actualizada al semestre actual.",
+      createdAt: "2026-08-21 15:30",
+      updatedAt: "2026-08-22 09:00"
+    }
+  ],
   audit: [
     { id: 1, date: "2026-09-13 10:00", user: "Sistema", event: "Carga inicial de datos demo", entity: "APP" }
   ]
@@ -134,6 +232,11 @@ let data = loadData();
 let session = loadSession();
 let currentView = "dashboard";
 let reportFilters = { periodId: "", program: "", institutionId: "", teacherId: "" };
+let directorFilter = "ALL";
+let studentRequestTab = "status";
+let notificationsOpen = false;
+const readNotifIds = new Set();
+let authMode = "login";
 
 const app = document.querySelector("#app");
 
@@ -181,6 +284,10 @@ function loadData() {
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
     }
+    if (!Array.isArray(stored.requests)) {
+      stored.requests = structuredClone(seedData.requests || []);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    }
     return stored;
   } catch {
     return structuredClone(seedData);
@@ -222,14 +329,40 @@ async function initializeApi() {
           if (!program.levels.includes(period.level)) program.levels.push(period.level);
         }
       }
+      // Combinar usuarios y solicitudes
+      const localUsers = Array.isArray(data?.users) ? data.users : [];
+      const serverUsers = Array.isArray(state.data?.users) ? state.data.users : [];
+      const mergedUsers = [...serverUsers];
+      let needsSync = false;
+      for (const lu of localUsers) {
+        if (!mergedUsers.some(su => su.email.toLowerCase() === lu.email.toLowerCase())) {
+          mergedUsers.push(lu);
+          needsSync = true;
+        }
+      }
+      const localReqs = Array.isArray(data?.requests) ? data.requests : [];
+      const serverReqs = Array.isArray(state.data?.requests) ? state.data.requests : [];
+      const mergedReqs = [...serverReqs];
+      for (const lr of localReqs) {
+        if (!mergedReqs.some(sr => sr.id === lr.id)) {
+          mergedReqs.push(lr);
+          needsSync = true;
+        }
+      }
+
       data = {
         ...state.data,
+        users: mergedUsers,
+        requests: mergedReqs,
         periods: periods.periods,
         institutions: agreements.institutions,
         agreements: agreements.agreements,
         places: agreements.places,
         assignments: assignments.assignments
       };
+      if (needsSync) {
+        apiRequest("/state", { method: "PUT", body: JSON.stringify(data) }).catch(() => {});
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
     apiEnabled = true;
@@ -448,12 +581,15 @@ function render() {
             <h1>${escapeHtml(viewTitle(currentView, user.role))}</h1>
             <p class="subtitle">${escapeHtml(viewSubtitle(currentView, user.role))}</p>
           </div>
-          <div class="userbox">
-            <div>
-              <strong>${escapeHtml(user.name)}</strong>
-              <div class="muted">${escapeHtml(user.email)}</div>
+          <div class="d-flex align-items-center gap-3">
+            ${renderNotificationBell(user)}
+            <div class="userbox">
+              <div>
+                <strong>${escapeHtml(user.name)}</strong>
+                <div class="muted">${escapeHtml(user.email)}</div>
+              </div>
+              <span class="avatar">${escapeHtml(user.initials)}</span>
             </div>
-            <span class="avatar">${escapeHtml(user.initials)}</span>
           </div>
         </header>
         ${renderView(user)}
@@ -461,6 +597,7 @@ function render() {
     </div>
   `;
   app.querySelectorAll("form[data-guided-workflow]").forEach(updateGuidedWorkflow);
+  setupDropzones();
 }
 
 function navForRole(role) {
@@ -471,11 +608,13 @@ function navForRole(role) {
       { id: "periods", label: "Periodos de practica", group: "Preparar practicas", description: "Configura fechas, horas y criterios para cada periodo." },
       { id: "agreements", label: "Convenios y plazas", group: "Preparar practicas", description: "Organiza instituciones, convenios y cupos disponibles." },
       { id: "assignments", label: "Asignaciones", group: "Seguimiento", description: "Consulta y organiza las practicas de los estudiantes." },
+      { id: "director-requests", label: "Solicitudes de práctica", group: "Seguimiento", description: "Consulta las solicitudes radicadas por estudiantes." },
       { id: "reports", label: "Consolidado", group: "Seguimiento", description: "Filtra el avance y consulta resultados de las practicas." },
       { id: "audit", label: "Auditoria", group: "Seguimiento", description: "Revisa el historial de acciones registradas." }
     ],
     ESTUDIANTE: [
       ...shared,
+      { id: "student-request", label: "Solicitar práctica", group: "Mi practica", description: "Radica tu solicitud formal y consulta su estado de aprobacion." },
       { id: "student-progress", label: "Mi avance", group: "Mi practica", description: "Consulta tus horas aprobadas y el estado de tu practica." },
       { id: "student-activities", label: "Mi bitacora", group: "Mi practica", description: "Registra el trabajo realizado y reporta tus horas." },
       { id: "student-evidence", label: "Evidencias", group: "Mi practica", description: "Adjunta y consulta los soportes de tus actividades." },
@@ -488,6 +627,7 @@ function navForRole(role) {
     ],
     DIRECTOR: [
       ...shared,
+      { id: "director-requests", label: "Solicitudes de práctica", group: "Gestion de practicas", description: "Revisa, aprueba, devuelve o rechaza solicitudes de practica." },
       { id: "reports", label: "Consolidado", group: "Consulta", description: "Consulta el avance general de las practicas." },
       { id: "audit", label: "Auditoria", group: "Consulta", description: "Revisa las acciones registradas en el sistema." }
     ]
@@ -613,12 +753,15 @@ function renderView(user) {
     "student-validations": () => renderStudentValidations(user),
     "student-progress": () => renderStudentProgress(user),
     "teacher-validations": () => renderTeacherValidations(user),
-    "teacher-visits": () => renderTeacherVisits(user)
+    "teacher-visits": () => renderTeacherVisits(user),
+    "student-request": () => renderStudentRequest(user),
+    "director-requests": () => renderDirectorRequests(user)
   };
   return renderers[currentView]?.() || renderDashboard(user);
 }
 
 function renderLogin() {
+  const isRegister = authMode === "register";
   const defaultUser = data.users.find((u) => u.role === "COORDINADOR") || data.users[0];
 
   const roleOrder = [
@@ -649,10 +792,10 @@ function renderLogin() {
   app.innerHTML = `
     <main class="login-page">
       <section class="login-card">
-        <div class="login-photo-side tw-overflow-hidden">
-          <img
-            src="login-photo.jpg"
-            alt="SIGPRA - Gestión de Prácticas Académicas"
+        <div class="login-photo-side tw-overflow-hidden">
+          <img
+            src="login-photo.jpg"
+            alt="SIGPRA - Gestión de Prácticas Académicas"
             class="login-photo-img tw-transition-transform tw-duration-700 hover:tw-scale-105"
             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80';"
           />
@@ -666,29 +809,96 @@ function renderLogin() {
             <strong>SIGPRA</strong>
             <span>Gestion de practicas academicas</span>
           </div>
-          <h2>Iniciar sesion</h2>
-          <p class="muted">Selecciona en la lista con quién deseas ingresar al sistema.</p>
-          <form id="login-form" class="form-grid">
-            <label class="full-field">Usuario para ingresar
-              <select id="login-user-select" name="user_select" class="form-select">
-                ${optionsHtml}
-              </select>
-            </label>
-            <div id="login-user-preview" class="login-user-preview full-field">
-              <span class="avatar login-preview-avatar">${escapeHtml(defaultUser?.initials || "RC")}</span>
-              <div class="login-preview-info">
-                <strong id="login-preview-name">${escapeHtml(defaultUser?.name || "")}</strong>
-                <span id="login-preview-role" class="muted">${escapeHtml(roleLabel(defaultUser?.role || ""))}</span>
-              </div>
+          ${isRegister ? `
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h2 class="mb-0">Registro de Estudiante</h2>
+              <span class="badge bg-success text-white">Nuevo Practicante</span>
             </div>
-            <label class="full-field">Correo
-              <input id="login-email" name="email" type="email" value="${escapeHtml(defaultUser?.email || "coordinador@udi.edu.co")}" required class="form-control" />
-            </label>
-            <label class="full-field">Clave
-              <input id="login-password" name="password" type="password" value="${escapeHtml(defaultUser?.password || "123456")}" required class="form-control" />
-            </label>
-            <button class="button primary full-field btn btn-primary tw-py-2.5 tw-shadow-md hover:tw-shadow-lg tw-transition-all hover:tw-scale-[1.01] active:tw-scale-[0.99] tw-font-medium" type="submit">Entrar</button>
-          </form>
+            <p class="muted mb-3">Crea tu cuenta institucional para radicar tu solicitud de práctica (CU-08).</p>
+
+            <form id="register-form" class="form-grid">
+              <label class="full-field">Nombre y Apellidos completos *
+                <input class="form-control" name="name" type="text" placeholder="Ej: Camilo Andrés Pérez" required />
+              </label>
+
+              <label class="full-field">Correo institucional UDI *
+                <input class="form-control" name="email" type="email" placeholder="estudiante@udi.edu.co" required />
+              </label>
+
+              <div class="row g-2 w-100 m-0">
+                <div class="col-md-6 p-0 pe-1">
+                  <label class="w-100">Código estudiantil *
+                    <input class="form-control" name="code" type="text" placeholder="UDI-2026-..." required />
+                  </label>
+                </div>
+                <div class="col-md-6 p-0 ps-1">
+                  <label class="w-100">Semestre actual *
+                    <select class="form-select" name="semester" required>
+                      <option value="7">7° Semestre</option>
+                      <option value="8" selected>8° Semestre</option>
+                      <option value="9">9° Semestre</option>
+                      <option value="10">10° Semestre</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="row g-2 w-100 m-0">
+                <div class="col-md-6 p-0 pe-1">
+                  <label class="w-100">Contraseña *
+                    <input class="form-control" name="password" type="password" minlength="6" placeholder="Mínimo 6 caracteres" required />
+                  </label>
+                </div>
+                <div class="col-md-6 p-0 ps-1">
+                  <label class="w-100">Confirmar contraseña *
+                    <input class="form-control" name="confirmPassword" type="password" minlength="6" placeholder="Repite contraseña" required />
+                  </label>
+                </div>
+              </div>
+
+              <button class="button primary full-field btn btn-success tw-py-2.5 tw-shadow-md hover:tw-shadow-lg tw-transition-all fw-bold mt-2" type="submit">
+                ✨ Crear Cuenta y Comenzar Solicitud
+              </button>
+            </form>
+
+            <div class="text-center mt-3 pt-3 border-top">
+              <span class="text-muted small">¿Ya tienes una cuenta registrada?</span>
+              <button class="btn btn-link p-0 fw-bold ms-1 text-decoration-none" type="button" data-action="toggle-auth-mode" data-mode="login">
+                Iniciar sesión aquí
+              </button>
+            </div>
+          ` : `
+            <h2>Iniciar sesion</h2>
+            <p class="muted">Selecciona en la lista con quién deseas ingresar al sistema.</p>
+            <form id="login-form" class="form-grid">
+              <label class="full-field">Usuario para ingresar
+                <select id="login-user-select" name="user_select" class="form-select">
+                  ${optionsHtml}
+                </select>
+              </label>
+              <div id="login-user-preview" class="login-user-preview full-field">
+                <span class="avatar login-preview-avatar">${escapeHtml(defaultUser?.initials || "RC")}</span>
+                <div class="login-preview-info">
+                  <strong id="login-preview-name">${escapeHtml(defaultUser?.name || "")}</strong>
+                  <span id="login-preview-role" class="muted">${escapeHtml(roleLabel(defaultUser?.role || ""))}</span>
+                </div>
+              </div>
+              <label class="full-field">Correo
+                <input id="login-email" name="email" type="email" value="${escapeHtml(defaultUser?.email || "coordinador@udi.edu.co")}" required class="form-control" />
+              </label>
+              <label class="full-field">Clave
+                <input id="login-password" name="password" type="password" value="${escapeHtml(defaultUser?.password || "123456")}" required class="form-control" />
+              </label>
+              <button class="button primary full-field btn btn-primary tw-py-2.5 tw-shadow-md hover:tw-shadow-lg tw-transition-all hover:tw-scale-[1.01] active:tw-scale-[0.99] tw-font-medium" type="submit">Entrar</button>
+            </form>
+
+            <div class="text-center my-3 p-2 bg-light rounded border">
+              <span class="text-muted small">¿Eres un estudiante nuevo?</span>
+              <button class="btn btn-link p-0 fw-bold ms-1 text-decoration-none" type="button" data-action="toggle-auth-mode" data-mode="register">
+                📝 Registrar nueva cuenta de estudiante
+              </button>
+            </div>
+          `}
         </div>
       </section>
     </main>
@@ -713,21 +923,33 @@ function renderDashboard(user) {
 
   return `
     <section class="grid">
-      ${metricCard("Periodos publicados", publishedPeriods.length, activePeriod ? `${activePeriod.year}-${activePeriod.semester} activo` : "No hay periodos activos")}
+      ${metricCard("Periodos publicados", publishedPeriods.length, activePeriod ? `${activePeriod.year}-${activePeriod.semester} activo` : "No hay periodos activos", "periods")}
       ${metricCard("Convenios vigentes", activeAgreements.length, `${activeAgreements.filter((agreement) => {
         const daysUntilEnd = (new Date(`${agreement.end}T00:00:00`) - new Date()) / 86400000;
         return daysUntilEnd >= 0 && daysUntilEnd <= 30;
-      }).length} por vencer este mes`)}
-      ${metricCard("Asignaciones pendientes", unassignedStudents, "Estudiantes por asignar")}
+      }).length} por vencer este mes`, "agreements")}
+      ${metricCard("Asignaciones pendientes", unassignedStudents, "Estudiantes por asignar", "assignments")}
       <article class="card wide">
-        <h2>Periodo activo</h2>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="mb-0">Periodos académicos activos / publicados</h2>
+          <button class="btn btn-sm btn-outline-primary" data-view="periods">Ver todos &rarr;</button>
+        </div>
         <div class="table-wrap table-responsive">
           <table class="table table-hover align-middle">
-            <thead><tr><th>Programa</th><th>Nivel</th><th>Vigencia</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Periodo</th><th>Programa</th><th>Nivel</th><th>Vigencia</th><th>Horas mín.</th><th>Estado</th></tr></thead>
             <tbody>
-              ${activePeriod
-                ? `<tr><td>${escapeHtml(activePeriod.program)}</td><td>${escapeHtml(activePeriod.level)}</td><td>${moneyDate(activePeriod.start)} - ${moneyDate(activePeriod.end)}</td><td>${statusTag(activePeriod.status)}</td></tr>`
-                : `<tr><td colspan="4">No hay periodos publicados.</td></tr>`}
+              ${publishedPeriods.length
+                ? publishedPeriods.map((p) => `
+                    <tr>
+                      <td><strong>${escapeHtml(p.year)}-${escapeHtml(p.semester)}</strong></td>
+                      <td>${escapeHtml(p.program)}</td>
+                      <td>${escapeHtml(p.level)}</td>
+                      <td>${moneyDate(p.start)} - ${moneyDate(p.end)}</td>
+                      <td><span class="badge bg-light text-dark border">${p.minHours} hrs</span></td>
+                      <td>${statusTag(p.status)}</td>
+                    </tr>
+                  `).join("")
+                : `<tr><td colspan="6" class="text-center py-3 text-muted">No hay periodos publicados. Configura uno en Periodos de práctica.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -745,26 +967,107 @@ function renderDashboard(user) {
 }
 
 function renderDirectorHome(user) {
-  const activeAssignments = data.assignments.filter((assignment) => assignment.status === "ACTIVA");
+  const allAssignments = data.assignments;
+  const activeAssignments = allAssignments.filter((assignment) => assignment.status === "ACTIVA");
+  const completedAssignments = allAssignments.filter((a) => {
+    const period = data.periods.find((p) => p.id === a.periodId);
+    const hrs = approvedHours(a.id) || a.approvedHours || 0;
+    return hrs >= (period?.minHours || 320);
+  });
+  const visitedAssignments = allAssignments.filter((a) => data.visits.some((v) => v.assignmentId === a.id));
+  const pendingAssignments = allAssignments.filter((a) =>
+    data.activities.some((act) => act.assignmentId === a.id && act.status === "PENDIENTE")
+  );
+
   const averageProgress = activeAssignments.length
     ? Math.round(activeAssignments.reduce((sum, assignment) => {
       const period = data.periods.find((item) => item.id === assignment.periodId);
-      const hours = approvedHours(assignment.id) || assignment.approvedHours;
+      const hours = approvedHours(assignment.id) || assignment.approvedHours || 0;
       return sum + Math.min(100, (hours / (period?.minHours || 1)) * 100);
     }, 0) / activeAssignments.length)
     : 0;
   const activeTeachers = new Set(activeAssignments.map((assignment) => assignment.teacherId)).size;
 
+  let displayed = allAssignments;
+  if (directorFilter === "ACTIVA") displayed = activeAssignments;
+  else if (directorFilter === "COMPLETADA") displayed = completedAssignments;
+  else if (directorFilter === "VISITAS") displayed = visitedAssignments;
+  else if (directorFilter === "PENDIENTE") displayed = pendingAssignments;
+
   return `
     <section class="grid">
-      ${metricCard("Programas activos", data.periods.filter((period) => period.status === "PUBLICADO").length, "Periodos publicados")}
-      ${metricCard("Estudiantes en practica", activeAssignments.length, `${activeTeachers} docentes asesores`)}
-      ${metricCard("Avance promedio", `${averageProgress}%`, "Sobre horas requeridas")}
+      ${metricCard("Programas activos", data.periods.filter((period) => period.status === "PUBLICADO").length, "Periodos publicados", "reports")}
+      ${metricCard("Estudiantes en practica", activeAssignments.length, `${activeTeachers} docentes asesores`, "reports")}
+      ${metricCard("Avance promedio", `${averageProgress}%`, "Sobre horas requeridas", "reports")}
+      
       <article class="card full">
-        <h2>Acciones</h2>
-        <p class="muted">Revisa el estado consolidado del periodo.</p>
-        <div class="toolbar">
-          <button class="btn btn-primary button primary tw-shadow-sm hover:tw-shadow-md hover:tw-scale-[1.02] active:tw-scale-[0.98] tw-transition-all" data-view="reports">Ver consolidado de practicas</button>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="mb-0">Bandeja de Radicación y Seguimiento Académico (CU-08)</h2>
+            <p class="muted mb-0 tw-text-sm">Supervisión institucional y auditoría en tiempo real de prácticas radicadas.</p>
+          </div>
+          <button class="btn btn-outline-primary btn-sm" data-view="reports">Ver reporte consolidado &rarr;</button>
+        </div>
+
+        <!-- Chips de filtrado interactivo -->
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button class="btn btn-sm ${directorFilter === 'ALL' ? 'btn-primary' : 'btn-outline-secondary'}" data-action="director-filter" data-filter="ALL">Todas las prácticas (${allAssignments.length})</button>
+          <button class="btn btn-sm ${directorFilter === 'ACTIVA' ? 'btn-primary' : 'btn-outline-secondary'}" data-action="director-filter" data-filter="ACTIVA">En curso (${activeAssignments.length})</button>
+          <button class="btn btn-sm ${directorFilter === 'COMPLETADA' ? 'btn-primary' : 'btn-outline-secondary'}" data-action="director-filter" data-filter="COMPLETADA">Horas cumplidas (${completedAssignments.length})</button>
+          <button class="btn btn-sm ${directorFilter === 'VISITAS' ? 'btn-primary' : 'btn-outline-secondary'}" data-action="director-filter" data-filter="VISITAS">Con visitas (${visitedAssignments.length})</button>
+          <button class="btn btn-sm ${directorFilter === 'PENDIENTE' ? 'btn-primary' : 'btn-outline-secondary'}" data-action="director-filter" data-filter="PENDIENTE">Con pendientes (${pendingAssignments.length})</button>
+        </div>
+
+        <div class="table-wrap table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Programa & Periodo</th>
+                <th>Institución receptora</th>
+                <th>Docente asesor</th>
+                <th>Horas / Avance</th>
+                <th>Estado</th>
+                <th>Auditoría</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${displayed.length
+                ? displayed.map((a) => {
+                    const d = assignmentDetails(a);
+                    const hrs = approvedHours(a.id) || a.approvedHours || 0;
+                    const req = d.period?.minHours || 320;
+                    const pct = Math.min(100, Math.round((hrs / req) * 100));
+                    return `
+                      <tr>
+                        <td>
+                          <strong>${escapeHtml(d.student?.name || "Sin estudiante")}</strong><br>
+                          <small class="text-muted">${escapeHtml(d.student?.code || d.student?.email || "")}</small>
+                        </td>
+                        <td>
+                          <span>${escapeHtml(d.period?.program || "N/A")}</span><br>
+                          <small class="text-muted">${d.period ? `${d.period.year}-${d.period.semester}` : ""}</small>
+                        </td>
+                        <td>${escapeHtml(d.institution?.name || "N/A")}</td>
+                        <td>${escapeHtml(d.teacher?.name || "N/A")}</td>
+                        <td>
+                          <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                              <div class="progress-bar bg-success" style="width: ${pct}%"></div>
+                            </div>
+                            <small><strong>${hrs}</strong>/${req}h (${pct}%)</small>
+                          </div>
+                        </td>
+                        <td>${statusTag(a.status)}</td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-primary tw-py-0.5 tw-px-2 tw-text-xs" data-modal="student-dossier" data-id="${a.id}">Expediente</button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join("")
+                : `<tr><td colspan="7" class="text-center py-4 text-muted">No hay prácticas para el filtro seleccionado.</td></tr>`}
+            </tbody>
+          </table>
         </div>
       </article>
     </section>
@@ -777,9 +1080,9 @@ function renderTeacherHome(user) {
   const teacherAssignments = data.assignments.filter((assignment) => assignment.teacherId === user.id);
   return `
     <section class="grid">
-      ${metricCard("Estudiantes asignados", teacherAssignments.length, "Practicas activas")}
-      ${metricCard("Pendientes", pending.length, "Actividades por revisar")}
-      ${metricCard("Visitas registradas", data.visits.filter((visit) => visit.teacherId === user.id).length, "Acompanamiento")}
+      ${metricCard("Estudiantes asignados", teacherAssignments.length, "Practicas activas", "teacher-visits")}
+      ${metricCard("Pendientes", pending.length, "Actividades por revisar", "teacher-validations")}
+      ${metricCard("Visitas registradas", data.visits.filter((visit) => visit.teacherId === user.id).length, "Acompanamiento", "teacher-visits")}
       <article class="card full">
         <h2>Actividades pendientes</h2>
         ${activitiesTable(pending, true)}
@@ -789,13 +1092,19 @@ function renderTeacherHome(user) {
   `;
 }
 
-function metricCard(label, value, helper) {
+function metricCard(label, value, helper, targetView = null) {
+  const interactiveAttr = targetView ? `data-view="${escapeHtml(targetView)}" role="button" tabindex="0"` : "";
+  const interactiveClasses = targetView
+    ? "tw-cursor-pointer hover:tw-border-primary hover:tw-shadow-lg hover:tw--translate-y-1 tw-transition-all group"
+    : "tw-transition-all hover:tw-shadow-md hover:tw--translate-y-0.5";
   return `
-    <article class="card tw-transition-all hover:tw-shadow-md hover:tw--translate-y-0.5">
-
-      <p class="muted">${escapeHtml(label)}</p>
-      <span class="metric">${escapeHtml(value)}</span>
-      <p class="muted">${escapeHtml(helper)}</p>
+    <article class="card ${interactiveClasses}" ${interactiveAttr}>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <p class="muted mb-0">${escapeHtml(label)}</p>
+        ${targetView ? '<span class="tw-text-xs tw-text-primary tw-font-semibold group-hover:tw-translate-x-0.5 tw-transition-transform">Ir &rarr;</span>' : ""}
+      </div>
+      <span class="metric text-primary">${escapeHtml(value)}</span>
+      <p class="muted mb-0 tw-text-xs">${escapeHtml(helper)}</p>
     </article>
   `;
 }
@@ -965,8 +1274,15 @@ function assignmentWorkflowForm() {
     <form class="form-grid workflow-form assignment-workflow" data-submit="assignment">
       <article class="card full assignment-step" id="assignment-step-student">
         <h2><span class="step-number">1</span> Estudiante practicante</h2>
-        <p class="assignment-period">Periodo vigente: <strong>${escapeHtml(activePeriod.year)}-${escapeHtml(activePeriod.semester)}</strong> (${escapeHtml(activePeriod.program)} - ${escapeHtml(activePeriod.level)})</p>
-        <input class="form-control" type="hidden" name="periodId" value="${activePeriod.id}" />
+        <label class="full-field">Periodo académico y programa formativo
+          <select class="form-select" name="periodId" required>
+            ${publishedPeriods.map((period) => `
+              <option value="${period.id}" ${period.id === activePeriod.id ? "selected" : ""}>
+                Periodo ${period.year}-${period.semester} — ${escapeHtml(period.program)} (${escapeHtml(period.level)}) [Mín: ${period.minHours} hrs]
+              </option>
+            `).join("")}
+          </select>
+        </label>
         <label class="full-field">Estudiante habilitado
           <select class="form-select" name="studentId" required>
             <option value="">-- Seleccione un estudiante --</option>
@@ -1107,7 +1423,7 @@ function assignmentsTable(assignments) {
   return `
     <div class="table-wrap table-responsive">
       <table class="table table-hover align-middle">
-        <thead><tr><th>Estudiante</th><th>Institucion</th><th>Docente asesor</th><th>Periodo</th><th>Horas</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Estudiante</th><th>Institucion</th><th>Docente asesor</th><th>Periodo</th><th>Horas</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody>
           ${assignments.map((assignment) => {
             const d = assignmentDetails(assignment);
@@ -1121,6 +1437,9 @@ function assignmentsTable(assignments) {
                 <td>${d.period ? `${d.period.year}-${d.period.semester}` : ""}</td>
                 <td>${hours} / ${min}</td>
                 <td>${statusTag(assignment.status)}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary tw-py-0.5 tw-px-2 tw-text-xs" data-modal="student-dossier" data-id="${assignment.id}">Expediente</button>
+                </td>
               </tr>
             `;
           }).join("")}
@@ -1273,15 +1592,53 @@ function renderStudentProgress(user, compact = false) {
   const activities = data.activities.filter((activity) => activity.assignmentId === assignment.id);
   return `
     <section class="grid">
-      ${metricCard("Horas aprobadas", `${hours} / ${required}`, `${percent}% de avance`)}
-      ${metricCard("Actividades", activities.length, "Registros creados")}
-      ${metricCard("Pendientes", activities.filter((item) => item.status === "PENDIENTE").length, "Por validar")}
-      <article class="card wide">
-        <h2>Practica activa</h2>
-        <p><strong>Institucion:</strong> ${escapeHtml(d.institution?.name)}</p>
-        <p><strong>Docente asesor:</strong> ${escapeHtml(d.teacher?.name)}</p>
-        <p><strong>Periodo:</strong> ${d.period?.year}-${d.period?.semester}</p>
-        <div class="progress" aria-label="Avance de horas"><span style="width:${percent}%"></span></div>
+      ${metricCard("Horas aprobadas", `${hours} / ${required}`, `${percent}% de avance`, "student-progress")}
+      ${metricCard("Actividades", activities.length, "Registros creados", "student-activities")}
+      ${metricCard("Pendientes", activities.filter((item) => item.status === "PENDIENTE").length, "Por validar", "student-validations")}
+      <article class="card wide p-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 class="mb-0">Practica Academica Activa</h2>
+          <span class="badge bg-success text-white px-3 py-1">En curso</span>
+        </div>
+        
+        <div class="circular-progress-box mb-3">
+          <div style="position: relative; width: 120px; height: 120px; flex-shrink: 0;">
+            <svg class="circular-progress-svg" viewBox="0 0 100 100">
+              <circle class="circle-bg" cx="50" cy="50" r="42"></circle>
+              <circle class="circle-progress" cx="50" cy="50" r="42" style="stroke-dasharray: 264; stroke-dashoffset: ${264 - (percent / 100) * 264};"></circle>
+            </svg>
+            <div class="circular-progress-center">
+              <div class="circular-progress-percent">${percent}%</div>
+              <div class="circular-progress-label">Avance</div>
+            </div>
+          </div>
+
+          <div class="circular-progress-stats w-100">
+            <div class="stat-pill">
+              <span class="text-muted">Horas acreditadas:</span>
+              <strong class="text-success">${hours} de ${required} hrs</strong>
+            </div>
+            <div class="stat-pill">
+              <span class="text-muted">Faltante para meta:</span>
+              <strong class="text-primary">${Math.max(0, required - hours)} horas</strong>
+            </div>
+            <div class="stat-pill">
+              <span class="text-muted">Institución receptora:</span>
+              <strong class="text-truncate" style="max-width: 200px;">${escapeHtml(d.institution?.name || 'Por asignar')}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2 small text-muted mb-3 border-top pt-2">
+          <div class="col-sm-6"><strong>Docente Asesor:</strong> ${escapeHtml(d.teacher?.name || 'Asignado')}</div>
+          <div class="col-sm-6"><strong>Periodo Académico:</strong> ${escapeHtml(d.period?.program || '')} (${d.period?.year}-${d.period?.semester})</div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" type="button" data-action="open-official-letter" data-id="${assignment.id}">
+            📄 Carta de Presentación Oficial UDI
+          </button>
+        </div>
       </article>
       <article class="card">
         <h2>Acciones</h2>
@@ -1368,10 +1725,24 @@ function renderReports(user) {
   return `
     <section class="grid">
       <article class="card full">
+        <!-- Membrete oficial UDI para impresion -->
+        <div class="official-print-header">
+          <div class="print-header-inner">
+            <div class="print-logo-text">
+              <h2 class="print-uni-title">UNIVERSIDAD DE INVESTIGACIÓN Y DESARROLLO — UDI</h2>
+              <p class="print-uni-sub">Sistema Integrado de Gestión de Prácticas Académicas y Pedagógicas (SIGPRA)</p>
+              <p class="print-uni-dept">Vicerrectoría Académica • Coordinación Institucional de Prácticas</p>
+            </div>
+            <div class="print-badge-box">
+              <div class="print-badge">REPORTE CONSOLIDADO</div>
+              <div class="print-date">Expedido: ${new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })}</div>
+            </div>
+          </div>
+        </div>
+
         <div class="toolbar">
-          <button class="btn btn-primary button primary" data-action="export-json">Exportar JSON</button>
-          <button class="btn btn-outline-secondary button" data-action="export-csv">Exportar CSV</button>
-          <button class="btn btn-outline-secondary button" data-action="export-print">Imprimir / guardar como PDF</button>
+          <button class="btn btn-outline-success button" data-action="export-csv">📊 Exportar Excel (CSV)</button>
+          <button class="btn btn-primary button primary" data-action="export-print">🖨️ Imprimir / Guardar como PDF</button>
         </div>
         <h2>Periodo y filtros</h2>
         <form class="form-grid report-filters" data-submit="report-filters">
@@ -1417,7 +1788,7 @@ function renderReports(user) {
         <h2>Detalle de practicas</h2>
         <div class="table-wrap table-responsive">
           <table class="table table-hover align-middle">
-            <thead><tr><th>Periodo</th><th>Programa</th><th>Estudiante</th><th>Institucion</th><th>Docente</th><th>Horas</th><th>Avance</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Periodo</th><th>Programa</th><th>Estudiante</th><th>Institucion</th><th>Docente</th><th>Horas</th><th>Avance</th><th>Estado</th><th>Expediente</th></tr></thead>
             <tbody>
               ${rows.map((row) => `
                 <tr>
@@ -1429,12 +1800,40 @@ function renderReports(user) {
                   <td>${row.hours} / ${row.required}</td>
                   <td><div class="progress"><span style="width:${Math.min(100, row.percent)}%"></span></div>${row.percent}%</td>
                   <td>${statusTag(row.assignment.status)}</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary tw-py-0.5 tw-px-2 tw-text-xs" data-modal="student-dossier" data-id="${row.assignment.id}">Expediente</button>
+                  </td>
                 </tr>
-              `).join("") || `<tr><td colspan="8">No hay informacion para los filtros seleccionados.</td></tr>`}
+              `).join("") || `<tr><td colspan="9">No hay informacion para los filtros seleccionados.</td></tr>`}
             </tbody>
           </table>
         </div>
         </div>
+
+        <!-- Firmas Oficiales para Impresion -->
+        <div class="official-print-signatures">
+          <div class="print-signatures-grid">
+            <div class="signature-col">
+              <div class="signature-line">
+                <strong>Coordinación de Prácticas</strong><br>
+                <span>Firma y Sello</span>
+              </div>
+            </div>
+            <div class="signature-col">
+              <div class="signature-line">
+                <strong>Dirección de Programa</strong><br>
+                <span>Firma y Visto Bueno</span>
+              </div>
+            </div>
+            <div class="signature-col">
+              <div class="signature-line">
+                <strong>Sello Institucional</strong><br>
+                <span>Universidad de Investigación y Desarrollo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <p class="muted">El reporte se calcula con los datos registrados para el periodo y los filtros aplicados. PDF se genera con la opcion Imprimir del navegador.</p>
       </article>
     </section>
@@ -1474,7 +1873,7 @@ function renderAudit() {
 function openModal(type, id = null) {
   const modal = document.createElement("div");
   modal.className = "sigpra-modal-backdrop";
-  modal.innerHTML = `<section class="sigpra-modal" role="dialog" aria-modal="true">${modalContent(type, id)}</section>`;
+  modal.innerHTML = `<section class="sigpra-modal ${type === 'student-dossier' ? 'sigpra-modal-lg' : ''}" role="dialog" aria-modal="true">${modalContent(type, id)}</section>`;
   document.body.appendChild(modal);
   modal.querySelectorAll("form[data-guided-workflow]").forEach(updateGuidedWorkflow);
 }
@@ -1490,7 +1889,8 @@ function modalContent(type, id) {
     activity: "Nueva actividad",
     evidence: "Registrar evidencia",
     validate: "Validar actividad",
-    visit: "Registrar visita"
+    visit: "Registrar visita",
+    "student-dossier": "Expediente del Practicante"
   }[type];
   return `
     <div class="sigpra-modal-header">
@@ -1507,6 +1907,128 @@ function optionList(items, labelFn, selectedId = "") {
 
 function modalForm(type, id) {
   const user = currentUser();
+  if (type === "student-dossier") {
+    const assignment = data.assignments.find((item) => item.id === Number(id));
+    if (!assignment) return '<div class="empty">No se encontro el registro de la asignacion.</div>';
+    const d = assignmentDetails(assignment);
+    const hours = approvedHours(assignment.id) || assignment.approvedHours || 0;
+    const required = d.period?.minHours || 320;
+    const percent = Math.min(100, Math.round((hours / required) * 100));
+    const studentActivities = data.activities.filter((a) => a.assignmentId === assignment.id);
+    const studentVisits = data.visits.filter((v) => v.assignmentId === assignment.id);
+    const studentEvidences = data.evidences.filter((e) => studentActivities.some((a) => a.id === e.activityId));
+
+    return `
+      <div class="dossier-content tw-space-y-4">
+        <!-- Ficha de Identificacion -->
+        <div class="card p-3 border tw-bg-slate-50">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              <span class="avatar fs-4" style="width: 52px; height: 52px;">${escapeHtml(d.student?.initials || "EP")}</span>
+            </div>
+            <div class="col">
+              <h3 class="mb-0 text-primary">${escapeHtml(d.student?.name || "Estudiante")}</h3>
+              <p class="mb-1 text-muted tw-text-sm">
+                <strong>Codigo:</strong> ${escapeHtml(d.student?.code || "N/A")} &bull; 
+                <strong>Correo:</strong> ${escapeHtml(d.student?.email || "")} &bull; 
+                <strong>Semestre:</strong> ${escapeHtml(d.student?.semester || 8)}
+              </p>
+              <div class="d-flex gap-2 flex-wrap align-items-center">
+                <span class="badge bg-secondary">${escapeHtml(d.period?.program || "Programa")}</span>
+                <span class="badge bg-info text-dark">Periodo ${escapeHtml(d.period?.year || "")}-${escapeHtml(d.period?.semester || "")}</span>
+                <span class="badge ${assignment.status === 'ACTIVA' ? 'bg-success' : 'bg-secondary'}">${escapeHtml(assignment.status)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metricas de Avance -->
+        <div class="card p-3 border">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <strong>Avance de Horas Academicas:</strong>
+            <span class="badge bg-primary fs-6">${hours} / ${required} hrs (${percent}%)</span>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: ${percent}%;" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          <div class="row mt-2 tw-text-xs text-muted">
+            <div class="col-6"><strong>Institucion Receptora:</strong> ${escapeHtml(d.institution?.name || "No asignada")}</div>
+            <div class="col-6"><strong>Docente Asesor:</strong> ${escapeHtml(d.teacher?.name || "No asignado")}</div>
+          </div>
+        </div>
+
+        <!-- Bitacora de Actividades -->
+        <div>
+          <h4 class="tw-font-bold tw-text-sm text-secondary mb-2">Bitacora de Actividades Reportadas (${studentActivities.length})</h4>
+          <div class="table-wrap table-responsive" style="max-height: 180px; overflow-y: auto;">
+            <table class="table table-sm table-hover align-middle tw-text-xs">
+              <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripcion</th><th>Horas</th><th>Estado</th></tr></thead>
+              <tbody>
+                ${studentActivities.length
+                  ? studentActivities.map((act) => `
+                      <tr>
+                        <td>${moneyDate(act.date)}</td>
+                        <td>${escapeHtml(act.type)}</td>
+                        <td title="${escapeHtml(act.description)}">${escapeHtml(act.description.slice(0, 45))}${act.description.length > 45 ? "..." : ""}</td>
+                        <td><strong>${act.hours}h</strong></td>
+                        <td>${statusTag(act.status)}</td>
+                      </tr>
+                    `).join("")
+                  : '<tr><td colspan="5" class="text-center text-muted py-2">No hay actividades registradas aun.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Visitas y Evidencias -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <h4 class="tw-font-bold tw-text-sm text-secondary mb-2">Visitas de Acompanamiento (${studentVisits.length})</h4>
+            <div class="table-wrap table-responsive" style="max-height: 140px; overflow-y: auto;">
+              <table class="table table-sm table-hover align-middle tw-text-xs">
+                <thead><tr><th>Fecha</th><th>Modalidad</th><th>Nota</th><th>Observacion</th></tr></thead>
+                <tbody>
+                  ${studentVisits.length
+                    ? studentVisits.map((v) => `
+                        <tr>
+                          <td>${moneyDate(v.date)}</td>
+                          <td><span class="badge bg-light text-dark">${escapeHtml(v.mode)}</span></td>
+                          <td><strong>${v.score ? v.score.toFixed(1) : "N/A"}</strong></td>
+                          <td title="${escapeHtml(v.observation || "")}">${escapeHtml((v.observation || "Sin obs.").slice(0, 25))}...</td>
+                        </tr>
+                      `).join("")
+                    : '<tr><td colspan="4" class="text-center text-muted py-2">Sin visitas registradas.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h4 class="tw-font-bold tw-text-sm text-secondary mb-2">Evidencias Adjuntas (${studentEvidences.length})</h4>
+            <div class="table-wrap table-responsive" style="max-height: 140px; overflow-y: auto;">
+              <table class="table table-sm table-hover align-middle tw-text-xs">
+                <thead><tr><th>Archivo</th><th>Tipo</th><th>Estado</th></tr></thead>
+                <tbody>
+                  ${studentEvidences.length
+                    ? studentEvidences.map((e) => `
+                        <tr>
+                          <td><span class="tw-text-blue-700">&#128196; ${escapeHtml(e.fileName)}</span></td>
+                          <td><span class="badge bg-light text-secondary">${escapeHtml(e.type)}</span></td>
+                          <td>${statusTag(e.status)}</td>
+                        </tr>
+                      `).join("")
+                    : '<tr><td colspan="3" class="text-center text-muted py-2">Sin evidencias adjuntas.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-end gap-2 pt-2 border-top">
+          <button class="btn btn-outline-secondary" data-action="close-modal" type="button">Cerrar</button>
+        </div>
+      </div>
+    `;
+  }
   if (type === "period") {
     const period = id ? data.periods.find((item) => item.id === Number(id)) : null;
     const criterion = (index, field, fallback) => escapeHtml(period?.rubric?.[index]?.[field] ?? fallback);
@@ -2167,14 +2689,27 @@ function exportJson() {
 }
 
 function exportCsv() {
-  const header = ["estudiante", "institucion", "docente", "horas_aprobadas", "estado"];
+  const header = ["Estudiante", "Codigo", "Programa", "Institucion", "Docente Asesor", "Horas Aprobadas", "Horas Requeridas", "Avance", "Estado"];
   const assignments = filteredReportAssignments();
   const rows = assignments.map((assignment) => {
     const d = assignmentDetails(assignment);
-    return [d.student?.name, d.institution?.name, d.teacher?.name, approvedHours(assignment.id) || assignment.approvedHours, assignment.status];
+    const hours = approvedHours(assignment.id) || assignment.approvedHours || 0;
+    const required = d.period?.minHours || 320;
+    const percent = `${Math.round((hours / required) * 100)}%`;
+    return [
+      d.student?.name || "Sin estudiante",
+      d.student?.code || "N/A",
+      d.period?.program || "Sin programa",
+      d.institution?.name || "Sin institucion",
+      d.teacher?.name || "Sin docente",
+      hours,
+      required,
+      percent,
+      assignment.status
+    ];
   });
-  const csv = [header, ...rows].map((row) => row.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
-  downloadFile("sigpra-consolidado.csv", csv, "text/csv");
+  const csvContent = "\ufeff" + [header, ...rows].map((row) => row.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(";")).join("\r\n");
+  downloadFile("sigpra-consolidado-udi.csv", csvContent, "text/csv;charset=utf-8;");
   audit(`Exporto consolidado CSV (${JSON.stringify(reportFilters)})`, "REPORTE");
   saveData();
 }
@@ -2190,6 +2725,62 @@ function downloadFile(name, content, type) {
 }
 
 document.addEventListener("submit", async (event) => {
+  if (event.target.id === "register-form") {
+    event.preventDefault();
+    const formData = Object.fromEntries(new FormData(event.target).entries());
+
+    if (formData.password !== formData.confirmPassword) {
+      toast("Las contraseñas no coinciden. Por favor verifícalas.");
+      return;
+    }
+
+    const email = String(formData.email || "").trim().toLowerCase();
+    const name = String(formData.name || "").trim();
+    const code = String(formData.code || "").trim();
+    const semester = Number(formData.semester) || 8;
+    const password = String(formData.password);
+
+    if (data.users.some(u => u.email.toLowerCase() === email)) {
+      toast("Ese correo institucional ya se encuentra registrado.");
+      return;
+    }
+
+    const nameParts = name.split(" ");
+    const initials = nameParts.length >= 2
+      ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+
+    const newUser = {
+      id: nextId(data.users),
+      name,
+      email,
+      password,
+      role: "ESTUDIANTE",
+      initials,
+      code: code || ("UDI-2026-" + String(data.users.length + 1).padStart(3, "0")),
+      semester,
+      enabledForAssignment: false
+    };
+
+    data.users.push(newUser);
+    audit(`Registro de nuevo estudiante practicante (${newUser.email})`, "USUARIO");
+    saveData();
+
+    if (apiEnabled) {
+      apiRequest("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ name, email, password, code, semester })
+      }).catch(() => {});
+    }
+
+    authMode = "login";
+    saveSession(newUser);
+    currentView = "student-request";
+    studentRequestTab = "form";
+    toast(`¡Bienvenido ${newUser.name}! Tu cuenta ha sido creada.`);
+    render();
+    return;
+  }
   if (event.target.id === "login-form") {
     event.preventDefault();
     const formData = Object.fromEntries(new FormData(event.target).entries());
@@ -2265,6 +2856,51 @@ document.addEventListener("change", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  const notifToggle = event.target.closest('[data-action="toggle-notifications"]');
+  if (notifToggle) {
+    event.stopPropagation();
+    notificationsOpen = !notificationsOpen;
+    render();
+    return;
+  }
+
+  const markAllRead = event.target.closest('[data-action="mark-all-notifications-read"]');
+  if (markAllRead) {
+    event.stopPropagation();
+    const session = getSession();
+    if (session) {
+      getNotificationsForUser(session).forEach(n => readNotifIds.add(n.id));
+    }
+    render();
+    return;
+  }
+
+  const notifItem = event.target.closest('[data-action="click-notification"]');
+  if (notifItem) {
+    const id = notifItem.getAttribute("data-id");
+    const view = notifItem.getAttribute("data-view");
+    if (id) readNotifIds.add(id);
+    notificationsOpen = false;
+    if (view) {
+      currentView = view;
+    }
+    render();
+    return;
+  }
+
+  const openLetterBtn = event.target.closest('[data-action="open-official-letter"]');
+  if (openLetterBtn) {
+    const asgId = openLetterBtn.getAttribute("data-id");
+    openOfficialPresentationLetterModal(asgId);
+    return;
+  }
+
+  // Close notifications dropdown on outside click
+  if (notificationsOpen && !event.target.closest(".notification-wrapper")) {
+    notificationsOpen = false;
+    render();
+  }
+
   const login = event.target.closest("[data-login]");
   if (login) {
     const demoUser = data.users.find((item) => item.email === login.dataset.login);
@@ -2317,6 +2953,180 @@ document.addEventListener("click", async (event) => {
     form.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
+  if (action.dataset.action === "toggle-auth-mode") {
+    authMode = action.dataset.mode;
+    renderLogin();
+    return;
+  }
+  if (action.dataset.action === "switch-request-tab") {
+    studentRequestTab = action.dataset.tab;
+    render();
+    return;
+  }
+  if (action.dataset.action === "preview-doc") {
+    const student = action.dataset.student || currentUser()?.name || "Estudiante Practicante";
+    const docType = action.dataset.doctype || "Documento Digital";
+    const filename = action.dataset.filename || "soporte.pdf";
+    openDocPreviewModal(student, docType, filename);
+    return;
+  }
+  if (action.dataset.action === "open-review-modal") {
+    openRequestReviewModal(action.dataset.id);
+    return;
+  }
+  if (action.dataset.action === "save-request-draft" || action.dataset.action === "submit-student-request") {
+    const user = currentUser();
+    if (!user || user.role !== "ESTUDIANTE") return;
+    const form = document.querySelector("#student-request-form");
+    if (!form) return;
+    const isDraft = action.dataset.action === "save-request-draft";
+    const periodId = Number(form.elements.periodId.value);
+    const level = form.elements.level.value;
+    const modality = form.elements.modality.value;
+    const placeId = form.elements.placeId?.value ? Number(form.elements.placeId.value) : undefined;
+    const suggestedCompany = form.elements.suggestedCompany?.value || "";
+    const comments = form.elements.comments?.value || "";
+
+    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+    let reqIndex = (data.requests || []).findIndex(r => r.studentId === user.id && r.periodId === periodId);
+
+    const docMatricula = form.elements.fileMatricula?.files?.[0]?.name || "matricula_" + user.name.toLowerCase().replace(/ /g, '_') + ".pdf";
+    const docEps = form.elements.fileEps?.files?.[0]?.name || "eps_arl_" + user.name.toLowerCase().replace(/ /g, '_') + ".pdf";
+    const docPaz = form.elements.filePazYSalvo?.files?.[0]?.name || "paz_y_salvo_" + user.name.toLowerCase().replace(/ /g, '_') + ".pdf";
+
+    if (!data.requests) data.requests = [];
+
+    const reqData = {
+      id: reqIndex >= 0 ? data.requests[reqIndex].id : nextId(data.requests),
+      studentId: user.id,
+      periodId,
+      level,
+      modality,
+      placeId,
+      suggestedCompany,
+      status: isDraft ? "BORRADOR" : "PENDIENTE_REVISION",
+      documents: {
+        matricula: { name: docMatricula, type: "application/pdf", uploadedAt: timestamp },
+        epsArl: { name: docEps, type: "application/pdf", uploadedAt: timestamp },
+        pazYSalvo: { name: docPaz, type: "application/pdf", uploadedAt: timestamp }
+      },
+      comments,
+      submittedAt: isDraft ? undefined : timestamp,
+      createdAt: reqIndex >= 0 ? data.requests[reqIndex].createdAt : timestamp,
+      updatedAt: timestamp
+    };
+
+    if (reqIndex >= 0) {
+      data.requests[reqIndex] = reqData;
+    } else {
+      data.requests.push(reqData);
+    }
+
+    audit(isDraft ? `Guardó borrador de solicitud #${reqData.id}` : `Radicó solicitud formal de práctica #${reqData.id}`, "SOLICITUD");
+    studentRequestTab = "status";
+    saveData();
+
+    if (apiEnabled) {
+      apiRequest("/requests", {
+        method: "POST",
+        body: JSON.stringify({
+          ...reqData,
+          userName: user.name
+        })
+      }).catch(() => {});
+    }
+
+    toast(isDraft ? "Borrador guardado exitosamente." : "¡Solicitud formal de práctica radicada exitosamente!");
+    render();
+    return;
+  }
+  if (action.dataset.action === "approve-request-confirm") {
+    const user = currentUser();
+    if (user?.role !== "DIRECTOR") {
+      toast("Operación no autorizada: Solo el Director de Programa puede aprobar solicitudes.");
+      return;
+    }
+    const reqId = Number(action.dataset.id);
+    const req = (data.requests || []).find(r => r.id === reqId);
+    if (!req) return;
+    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+    req.status = "APROBADA";
+    req.reviewedAt = timestamp;
+    req.reviewedBy = user?.id || 4;
+    req.justification = document.querySelector("#review-justification-input")?.value?.trim() || "Cumple requisitos y soportes verificados.";
+
+    const student = data.users.find(u => u.id === req.studentId);
+    if (student) student.enabledForAssignment = true;
+
+    audit(`Aprobó solicitud de práctica #${req.id} y habilitó practicante`, "SOLICITUD");
+    saveData();
+
+    if (apiEnabled) {
+      apiRequest(`/requests/${req.id}/review`, {
+        method: "PUT",
+        body: JSON.stringify({
+          status: "APROBADA",
+          justification: req.justification,
+          reviewerName: user.name,
+          reviewerId: user.id
+        })
+      }).catch(() => {});
+    }
+
+    document.querySelector(".sigpra-modal-backdrop")?.remove();
+    toast(`Solicitud #${req.id} APROBADA. El estudiante ha sido Habilitado.`);
+    render();
+    return;
+  }
+  if (action.dataset.action === "return-request-confirm" || action.dataset.action === "reject-request-confirm") {
+    const user = currentUser();
+    if (user?.role !== "DIRECTOR") {
+      toast("Operación no autorizada: Solo el Director de Programa puede resolver solicitudes.");
+      return;
+    }
+    const isReturn = action.dataset.action === "return-request-confirm";
+    const reqId = Number(action.dataset.id);
+    const req = (data.requests || []).find(r => r.id === reqId);
+    if (!req) return;
+    const justification = document.querySelector("#review-justification-input")?.value?.trim();
+    if (!justification) {
+      toast("La justificación es obligatoria para devolver o rechazar una solicitud.");
+      return;
+    }
+    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+    req.status = isReturn ? "DEVUELTA" : "RECHAZADA";
+    req.reviewedAt = timestamp;
+    req.reviewedBy = user?.id || 4;
+    req.justification = justification;
+
+    const student = data.users.find(u => u.id === req.studentId);
+    if (student) student.enabledForAssignment = false;
+
+    audit(`${isReturn ? 'Devolvió' : 'Rechazó'} solicitud de práctica #${req.id}: ${justification}`, "SOLICITUD");
+    saveData();
+
+    if (apiEnabled) {
+      apiRequest(`/requests/${req.id}/review`, {
+        method: "PUT",
+        body: JSON.stringify({
+          status: req.status,
+          justification,
+          reviewerName: user.name,
+          reviewerId: user.id
+        })
+      }).catch(() => {});
+    }
+
+    document.querySelector(".sigpra-modal-backdrop")?.remove();
+    toast(`Solicitud #${req.id} ${isReturn ? 'DEVUELTA para corrección' : 'RECHAZADA'}.`);
+    render();
+    return;
+  }
+  if (action.dataset.action === "director-filter") {
+    directorFilter = action.dataset.filter || "ALL";
+    render();
+    return;
+  }
   if (action.dataset.action === "reset-assignment-workflow") {
     const form = action.closest('[data-submit="assignment"]');
     form.elements.studentId.value = "";
@@ -2355,3 +3165,1049 @@ document.addEventListener("keydown", (event) => {
 });
 
 initializeApi();
+
+
+function renderRequestStepper(status, hasAssignment) {
+  const isDraft = status === "BORRADOR";
+  const isPending = status === "PENDIENTE_REVISION";
+  const isApproved = status === "APROBADA";
+  const isReturned = status === "DEVUELTA";
+  const isRejected = status === "RECHAZADA";
+
+  // Step 1: Radicación
+  const step1Class = (!status || isDraft) ? "active" : "completed";
+  const step1Icon = (!status || isDraft) ? "📝" : "✓";
+  const step1Desc = (!status || isDraft) ? "Diligenciando" : "Soportes cargados";
+
+  // Step 2: Dictamen Director
+  let step2Class = "";
+  let step2Icon = "⚖️";
+  let step2Desc = "En espera";
+  if (isPending) {
+    step2Class = "in-review active";
+    step2Icon = "⏳";
+    step2Desc = "En revisión";
+  } else if (isApproved) {
+    step2Class = "completed";
+    step2Icon = "✓";
+    step2Desc = "Aprobado (Habilitado)";
+  } else if (isReturned) {
+    step2Class = "returned";
+    step2Icon = "⚠";
+    step2Desc = "Devuelto p/ corrección";
+  } else if (isRejected) {
+    step2Class = "returned";
+    step2Icon = "✕";
+    step2Desc = "Rechazado";
+  }
+
+  // Step 3: Asignación
+  let step3Class = "";
+  let step3Icon = "🏫";
+  let step3Desc = "Pendiente plaza";
+  if (hasAssignment) {
+    step3Class = "completed";
+    step3Icon = "✓";
+    step3Desc = "Plaza y tutor asignados";
+  } else if (isApproved) {
+    step3Class = "active";
+    step3Icon = "🔄";
+    step3Desc = "En asignación por Coord.";
+  }
+
+  // Step 4: En Ejecución
+  let step4Class = "";
+  let step4Icon = "⏱️";
+  let step4Desc = "Pendiente inicio";
+  if (hasAssignment) {
+    step4Class = "active";
+    step4Icon = "🚀";
+    step4Desc = "Bitácoras en curso";
+  }
+
+  return `
+    <div class="sigpra-stepper-box mb-4">
+      <div class="small fw-bold text-uppercase text-muted mb-2 text-center">Ruta del Trámite de Práctica Pedagógica (CU-08)</div>
+      <div class="sigpra-stepper">
+        <div class="sigpra-step ${step1Class}">
+          <div class="sigpra-step-bubble">${step1Icon}</div>
+          <div class="sigpra-step-title">1. Radicación</div>
+          <div class="sigpra-step-desc">${step1Desc}</div>
+        </div>
+        <div class="sigpra-step ${step2Class}">
+          <div class="sigpra-step-bubble">${step2Icon}</div>
+          <div class="sigpra-step-title">2. Dirección</div>
+          <div class="sigpra-step-desc">${step2Desc}</div>
+        </div>
+        <div class="sigpra-step ${step3Class}">
+          <div class="sigpra-step-bubble">${step3Icon}</div>
+          <div class="sigpra-step-title">3. Asignación</div>
+          <div class="sigpra-step-desc">${step3Desc}</div>
+        </div>
+        <div class="sigpra-step ${step4Class}">
+          <div class="sigpra-step-bubble">${step4Icon}</div>
+          <div class="sigpra-step-title">4. En Ejecución</div>
+          <div class="sigpra-step-desc">${step4Desc}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openDocPreviewModal(studentName, docType, filename) {
+  document.querySelector(".sigpra-modal-backdrop")?.remove();
+  const timestamp = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const hash = Array.from(filename + studentName).reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 0x12345678).toString(16).toUpperCase();
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "sigpra-modal-backdrop";
+  backdrop.innerHTML = `
+    <div class="sigpra-modal" style="max-width: 650px;">
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-4">📄</span>
+          <h3 class="mb-0 fw-bold" style="font-size: 1.15rem; color: #004b87;">Visor de Soporte Digital — SIGPRA</h3>
+        </div>
+        <button class="btn-close" type="button" data-action="close-modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="doc-modal-paper my-2">
+        <div class="doc-modal-watermark">EXPEDIENTE VERIFICADO</div>
+        <div class="text-center border-bottom pb-3 mb-3">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #004b87; letter-spacing: 1px;">UNIVERSIDAD DE INVESTIGACIÓN Y DESARROLLO — UDI</div>
+          <div style="font-size: 0.75rem; color: #64748b;">FACULTAD DE INGENIERÍAS · PROGRAMA DE INGENIERÍA DE SISTEMAS</div>
+          <div class="badge bg-success-subtle text-success border border-success-subtle mt-2 px-3 py-1">
+            ✓ Documento Oficial Radicado en Convocatoria
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <h4 style="font-size: 1.05rem; font-weight: 700; color: #1e293b;" class="mb-1">${escapeHtml(docType)}</h4>
+          <p class="small text-muted mb-2">Archivo digital: <code>${escapeHtml(filename)}</code></p>
+        </div>
+
+        <div class="bg-light p-3 rounded small mb-3 border">
+          <div class="row g-2">
+            <div class="col-sm-6"><strong>Estudiante:</strong> ${escapeHtml(studentName)}</div>
+            <div class="col-sm-6"><strong>Fecha Radicación:</strong> ${timestamp}</div>
+            <div class="col-sm-6"><strong>Tipo MIME:</strong> application/pdf</div>
+            <div class="col-sm-6"><strong>Firma SHA-256:</strong> <span class="text-primary font-monospace">${hash}4E8B</span></div>
+          </div>
+        </div>
+
+        <div class="p-3 border rounded text-center bg-white shadow-sm" style="min-height: 120px; display: grid; place-items: center;">
+          <div>
+            <div class="fs-1 text-primary mb-1">📋</div>
+            <div class="fw-bold small text-dark">${escapeHtml(docType)} Digitalizado</div>
+            <div class="text-muted" style="font-size: 0.75rem;">Verificado por el subsistema de radicación CU-08 conforme al Decreto 1075 de 2015.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+        <span class="small text-muted">ID de auditoría: SIGPRA-DOC-${hash}</span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary btn-sm" type="button" onclick="toast('Descargando copia local de ' + '${escapeHtml(filename)}', 'info')">
+            ⬇️ Descargar Copia
+          </button>
+          <button class="btn btn-secondary btn-sm" type="button" data-action="close-modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(backdrop);
+}
+
+
+function renderStudentRequest(user) {
+  const publishedPeriods = (data.periods || []).filter((period) => period.status === "PUBLICADO");
+  const activePeriod = publishedPeriods[0] || (data.periods || [])[0];
+
+  if (!publishedPeriods.length) {
+    return `
+      <section class="stack">
+        <article class="card full">
+          <h2>Convocatoria de practicas</h2>
+          <div class="alert alert-warning mb-0" role="alert">
+            <h5 class="alert-heading">⚠️ No hay convocatorias abiertas</h5>
+            <p class="mb-0">En este momento no existen periodos de practica en estado PUBLICADO . Comunícate con la coordinación académica para más información.</p>
+          </div>
+        </article>
+      </section>
+    `;
+  }
+
+  const existingRequest = (data.requests || []).find(
+    (req) => req.studentId === user.id && req.periodId === activePeriod.id
+  );
+
+  // Si no tiene solicitud previa, la pestaña por defecto es el formulario
+  const currentTab = (!existingRequest) ? "form" : studentRequestTab;
+
+  const isApproved = existingRequest?.status === "APROBADA";
+  const isReturned = existingRequest?.status === "DEVUELTA";
+  const isPending = existingRequest?.status === "PENDIENTE_REVISION";
+  const isDraft = existingRequest?.status === "BORRADOR";
+
+  const defaultLevel = existingRequest?.level || activePeriod.level || "VIII semestre";
+  const defaultModality = existingRequest?.modality || "Convenio institucional";
+  const defaultComments = existingRequest?.comments || "";
+
+  const hasAssignment = (data.assignments || []).some(a => a.studentId === user.id && a.status === "ACTIVA");
+
+  return `
+    <section class="stack">
+      ${renderRequestStepper(existingRequest?.status, hasAssignment)}
+      <article class="card full">
+        <!-- Navegación de pestañas: Estado vs Formulario -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 border-bottom pb-2">
+          <ul class="nav nav-pills gap-2" role="tablist">
+            ${existingRequest ? `
+              <li class="nav-item">
+                <button class="nav-link ${currentTab === 'status' ? 'active' : 'btn-outline-primary'}" data-action="switch-request-tab" data-tab="status">
+                  📋 Mi Estado de Radicación (${existingRequest.status})
+                </button>
+              </li>
+            ` : ''}
+            <li class="nav-item">
+              <button class="nav-link ${currentTab === 'form' ? 'active' : 'btn-outline-primary'}" data-action="switch-request-tab" data-tab="form">
+                📝 ${existingRequest ? 'Diligenciar / Nueva Solicitud (Formulario)' : 'Diligenciar Formulario de Solicitud '}
+              </button>
+            </li>
+          </ul>
+
+          <div>
+            ${existingRequest ? `
+              <span class="badge ${isApproved ? 'bg-success' : isPending ? 'bg-warning text-dark' : isReturned ? 'bg-danger' : 'bg-secondary'} px-3 py-2 fs-6">
+                ${escapeHtml(existingRequest.status)}
+              </span>
+            ` : '<span class="badge bg-primary px-3 py-2 fs-6">NUEVA SOLICITUD</span>'}
+          </div>
+        </div>
+
+        ${currentTab === 'status' && existingRequest ? `
+          <!-- VISTA 1: RESUMEN DE ESTADO RADICADO -->
+          <div>
+            <h2 class="mb-1">Estado de tu solicitud de practica </h2>
+            <p class="muted mb-3">Periodo academico: <strong>${escapeHtml(activePeriod.program)} - ${escapeHtml(activePeriod.level)} (${activePeriod.year}-${activePeriod.semester})</strong></p>
+
+            ${isApproved ? `
+              <div class="alert alert-success d-flex align-items-center gap-3" role="alert">
+                <span class="fs-2">🎉</span>
+                <div>
+                  <h5 class="alert-heading mb-1">¡Solicitud Aprobada y Estudiante Habilitado!</h5>
+                  <p class="mb-0">Tu solicitud formal fue evaluada y aprobada por la Direccion de Programa. Cumples con todos los prerrequisitos y estas habilitado para asignacion de plaza y docente asesor.</p>
+                  <small class="text-muted">Aprobada el: ${escapeHtml(existingRequest.reviewedAt || existingRequest.updatedAt)} | Observacion: "${escapeHtml(existingRequest.justification || 'Cumple con totalidad de créditos y documentación verificada.')}"</small>${hasAssignment ? `
+                  <div class="mt-3"><button class="btn btn-sm btn-success fw-bold shadow-sm" type="button" data-action="open-official-letter" data-id="${data.assignments.find(a => a.studentId === user.id)?.id || 1}">📄 Ver / Imprimir Carta de Presentación Oficial UDI</button></div>` : ""}
+                </div>
+              </div>
+            ` : isPending ? `
+              <div class="alert alert-info d-flex align-items-center gap-3" role="alert">
+                <span class="fs-2">⏳</span>
+                <div>
+                  <h5 class="alert-heading mb-1">Solicitud en revision por el Director de Programa</h5>
+                  <p class="mb-0">Tu solicitud fue radicada exitosamente el <strong>${escapeHtml(existingRequest.submittedAt || existingRequest.updatedAt)}</strong>. Actualmente el Director se encuentra validando tus soportes academicos y de seguridad social.</p>
+                </div>
+              </div>
+            ` : isReturned ? `
+              <div class="alert alert-danger d-flex align-items-center gap-3" role="alert">
+                <span class="fs-2">⚠️</span>
+                <div>
+                  <h5 class="alert-heading mb-1">Solicitud devuelta para correccion por el Director:</h5>
+                  <p class="mb-0 fw-bold">"${escapeHtml(existingRequest.justification || 'Ajustar soportes')}"</p>
+                  <button class="btn btn-sm btn-outline-danger mt-2" data-action="switch-request-tab" data-tab="form">Ir al formulario para corregir</button>
+                </div>
+              </div>
+            ` : `
+              <div class="alert alert-secondary d-flex align-items-center gap-3" role="alert">
+                <span class="fs-2">💾</span>
+                <div>
+                  <h5 class="alert-heading mb-1">Borrador guardado</h5>
+                  <p class="mb-0">Tienes un borrador pendiente por completar y radicar.</p>
+                  <button class="btn btn-sm btn-primary mt-2" data-action="switch-request-tab" data-tab="form">Continuar diligenciando formulario</button>
+                </div>
+              </div>
+            `}
+
+            <div class="card p-3 bg-light border-0 mt-3">
+              <h5 class="fw-bold mb-3">Detalle del tramite radicado</h5>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <span class="text-muted d-block small">Nivel de practica:</span>
+                  <strong>${escapeHtml(existingRequest.level)}</strong>
+                </div>
+                <div class="col-md-4">
+                  <span class="text-muted d-block small">Modalidad:</span>
+                  <strong>${escapeHtml(existingRequest.modality)}</strong>
+                </div>
+                <div class="col-md-4">
+                  <span class="text-muted d-block small">Plaza / Institucion:</span>
+                  <strong>${escapeHtml(existingRequest.placeId ? (data.places.find(p=>p.id===existingRequest.placeId)?.tutor || 'Convenio institucional') : (existingRequest.suggestedCompany || 'Por asignar'))}</strong>
+                </div>
+              </div>
+
+              <hr class="my-3" />
+
+              <h6 class="fw-bold mb-2">Documentacion de soporte adjunta (Prerrequisitos)</h6>
+              <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-secondary p-2">📄 Certificado de matricula: ${escapeHtml(existingRequest.documents?.matricula?.name || 'matricula.pdf')}</span>
+                <span class="badge bg-secondary p-2">📄 EPS / ARL vigente: ${escapeHtml(existingRequest.documents?.epsArl?.name || 'eps_arl.pdf')}</span>
+                <span class="badge bg-secondary p-2">📄 Paz y salvo academico: ${escapeHtml(existingRequest.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}</span>
+              </div>
+
+              ${existingRequest.comments ? `
+                <div class="mt-3">
+                  <span class="text-muted d-block small">Observaciones adicionales:</span>
+                  <p class="mb-0 fst-italic">"${escapeHtml(existingRequest.comments)}"</p>
+                </div>
+              ` : ''}
+
+              <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+                <button class="btn btn-outline-primary" data-action="switch-request-tab" data-tab="form">
+                  ✏️ Diligenciar / Modificar formulario de solicitud
+                </button>
+              </div>
+            </div>
+          </div>
+        ` : `
+          <!-- VISTA 2: FORMULARIO INTERACTIVO POR ETAPAS PARA LLENAR INFORMACION -->
+          <div>
+            <div class="mb-4">
+              <h2 class="mb-1">Formulario de Solicitud de Practica Academica </h2>
+              <p class="muted mb-0">Diligencia la informacion requerida en cada una de las 4 etapas y adjunta tus soportes digitales para habilitar tu practica.</p>
+            </div>
+
+            ${isReturned ? `
+              <div class="alert alert-danger d-flex align-items-center gap-3 mb-4" role="alert">
+                <span class="fs-2">⚠️</span>
+                <div>
+                  <h5 class="alert-heading mb-1">Motivo de devolucion registrado por el Director:</h5>
+                  <p class="mb-0 fw-bold">"${escapeHtml(existingRequest.justification || 'Ajustar documentos')}"</p>
+                  <small>Por favor realiza las correcciones solicitadas en las etapas a continuacion y vuelve a enviar.</small>
+                </div>
+              </div>
+            ` : ''}
+
+            <form class="form-grid workflow-form" id="student-request-form">
+              <input type="hidden" name="periodId" value="${activePeriod.id}" />
+
+              <!-- Etapa 1: Periodo y Nivel -->
+              <article class="card full mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-primary fs-6 rounded-pill">Etapa 1</span>
+                  <h3 class="mb-0 fs-5">Periodo y Nivel Academico</h3>
+                </div>
+                <p class="muted small mb-3">Verifica que el periodo activo corresponda a tu semestre y programa de formacion.</p>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold small">Periodo academico activo</label>
+                    <input type="text" class="form-control bg-light" readonly value="${escapeHtml(activePeriod.program)} - ${activePeriod.year}-${activePeriod.semester}" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold small">Nivel de practica que vas a cursar *</label>
+                    <select class="form-select" name="level" required>
+                      <option value="${escapeHtml(activePeriod.level)}" ${defaultLevel === activePeriod.level ? 'selected' : ''}>${escapeHtml(activePeriod.level)}</option>
+                      <option value="Practica pedagogica VIII" ${defaultLevel === 'Practica pedagogica VIII' ? 'selected' : ''}>Practica pedagogica VIII</option>
+                      <option value="Practica profesional" ${defaultLevel === 'Practica profesional' ? 'selected' : ''}>Practica profesional</option>
+                    </select>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Etapa 2: Modalidad y Plaza -->
+              <article class="card full mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-primary fs-6 rounded-pill">Etapa 2</span>
+                  <h3 class="mb-0 fs-5">Modalidad de Solicitud y Plaza de Interes</h3>
+                </div>
+                <p class="muted small mb-3">Indica si realizaras tu practica en los convenios gestionados por la UDI o mediante autogestion.</p>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold small">Modalidad de solicitud *</label>
+                    <select class="form-select" name="modality" id="request-modality-select" required>
+                      <option value="Convenio institucional" ${defaultModality === 'Convenio institucional' ? 'selected' : ''}>Convenio institucional (Plazas UDI)</option>
+                      <option value="Practica autogestionada" ${defaultModality === 'Practica autogestionada' ? 'selected' : ''}>Practica autogestionada (Empresa propia)</option>
+                      <option value="Validacion laboral" ${defaultModality === 'Validacion laboral' ? 'selected' : ''}>Validacion por experiencia laboral</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6" id="request-place-container">
+                    <label class="form-label fw-bold small">Plaza de practica sugerida (opcional)</label>
+                    <select class="form-select" name="placeId">
+                      <option value="">-- Seleccionar plaza institucional --</option>
+                      ${(data.places || []).map(p => {
+                        const inst = data.institutions.find(i => i.id === data.agreements.find(a => a.id === p.agreementId)?.institutionId);
+                        return `<option value="${p.id}" ${existingRequest?.placeId === p.id ? 'selected' : ''}>${escapeHtml(inst?.name || 'Institucion')} (${escapeHtml(p.shift)} - Cupos: ${p.offered - p.occupied})</option>`;
+                      }).join('')}
+                    </select>
+                  </div>
+                  <div class="col-md-6 d-none" id="request-company-container">
+                    <label class="form-label fw-bold small">Nombre de la institucion o empresa propuesta</label>
+                    <input type="text" class="form-control" name="suggestedCompany" placeholder="Ej: Colegio Bilingue..." value="${escapeHtml(existingRequest?.suggestedCompany || '')}" />
+                  </div>
+                </div>
+              </article>
+
+              <!-- Etapa 3: Soportes y Prerrequisitos -->
+              <article class="card full mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-primary fs-6 rounded-pill">Etapa 3</span>
+                  <h3 class="mb-0 fs-5">Carga de Documentos de Soporte y Prerrequisitos</h3>
+                </div>
+                <p class="muted small mb-3">Formatos autorizados: PDF, JPG, PNG (Tamano maximo 10 MB). Todos los campos son validados para revision del Director.</p>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <div class="sigpra-dropzone has-file" data-field="fileMatricula" data-name="matricula">
+                      <input type="file" class="d-none dropzone-input" name="fileMatricula" accept=".pdf,.png,.jpg" />
+                      <span class="dropzone-icon">☁️</span>
+                      <strong class="d-block small mb-1">1. Certificado de Matrícula *</strong>
+                      <div class="small text-muted mb-2">Arrastra tu PDF aquí o haz clic</div>
+                      <div class="dropzone-file-info">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">✓ Soporte listo</span>
+                        <span class="dropzone-file-name" title="${escapeHtml(existingRequest?.documents?.matricula?.name || 'matricula.pdf')}">${escapeHtml(existingRequest?.documents?.matricula?.name || 'matricula_' + user.name.toLowerCase().replace(/ /g, '_') + '.pdf')}</span>
+                      </div>
+                      <button type="button" class="btn btn-outline-secondary btn-sm mt-2 py-0 px-2 fs-7" onclick="this.closest('.sigpra-dropzone').querySelector('.dropzone-input').click()">Examinar archivo</button>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="sigpra-dropzone has-file" data-field="fileEps" data-name="epsArl">
+                      <input type="file" class="d-none dropzone-input" name="fileEps" accept=".pdf,.png,.jpg" />
+                      <span class="dropzone-icon">☁️</span>
+                      <strong class="d-block small mb-1">2. Afiliación EPS / ARL *</strong>
+                      <div class="small text-muted mb-2">Arrastra tu PDF aquí o haz clic</div>
+                      <div class="dropzone-file-info">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">✓ Soporte listo</span>
+                        <span class="dropzone-file-name" title="${escapeHtml(existingRequest?.documents?.epsArl?.name || 'eps_arl.pdf')}">${escapeHtml(existingRequest?.documents?.epsArl?.name || 'eps_arl_' + user.name.toLowerCase().replace(/ /g, '_') + '.pdf')}</span>
+                      </div>
+                      <button type="button" class="btn btn-outline-secondary btn-sm mt-2 py-0 px-2 fs-7" onclick="this.closest('.sigpra-dropzone').querySelector('.dropzone-input').click()">Examinar archivo</button>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="sigpra-dropzone has-file" data-field="filePazYSalvo" data-name="pazYSalvo">
+                      <input type="file" class="d-none dropzone-input" name="filePazYSalvo" accept=".pdf,.png,.jpg" />
+                      <span class="dropzone-icon">☁️</span>
+                      <strong class="d-block small mb-1">3. Paz y Salvo Académico *</strong>
+                      <div class="small text-muted mb-2">Arrastra tu PDF aquí o haz clic</div>
+                      <div class="dropzone-file-info">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">✓ Soporte listo</span>
+                        <span class="dropzone-file-name" title="${escapeHtml(existingRequest?.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}">${escapeHtml(existingRequest?.documents?.pazYSalvo?.name || 'paz_y_salvo_' + user.name.toLowerCase().replace(/ /g, '_') + '.pdf')}</span>
+                      </div>
+                      <button type="button" class="btn btn-outline-secondary btn-sm mt-2 py-0 px-2 fs-7" onclick="this.closest('.sigpra-dropzone').querySelector('.dropzone-input').click()">Examinar archivo</button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Etapa 4: Observaciones y Radicacion -->
+              <article class="card full mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-primary fs-6 rounded-pill">Etapa 4</span>
+                  <h3 class="mb-0 fs-5">Observaciones Adicionales y Radicacion</h3>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold">Comentarios o informacion complementaria para el Director de Programa</label>
+                  <textarea class="form-control" name="comments" rows="2" placeholder="Escribe aqui cualquier observacion sobre tu disponibilidad, jornada o modalidad...">${escapeHtml(defaultComments)}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
+                  ${existingRequest ? `
+                    <button type="button" class="btn btn-outline-secondary" data-action="switch-request-tab" data-tab="status">
+                      ← Volver a mi estado
+                    </button>
+                  ` : '<div></div>'}
+
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-action="save-request-draft">
+                      💾 Guardar como borrador
+                    </button>
+                    <button type="button" class="btn btn-primary px-4 fw-bold shadow-sm" data-action="submit-student-request">
+                      📤 Radicar Solicitud Formal
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </form>
+          </div>
+        `}
+      </article>
+    </section>
+  `;
+}
+
+
+function renderDirectorRequests(user) {
+  const requests = data.requests || [];
+  const pending = requests.filter(r => r.status === "PENDIENTE_REVISION");
+  const approved = requests.filter(r => r.status === "APROBADA");
+  const returned = requests.filter(r => r.status === "DEVUELTA");
+  const rejected = requests.filter(r => r.status === "RECHAZADA");
+
+  return `
+    <section class="stack">
+      <!-- Tarjetas de metricas rapidas -->
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <div class="card p-3 border-start border-4 border-warning shadow-sm">
+            <span class="text-muted small text-uppercase fw-bold">Pendientes de Revision</span>
+            <h2 class="mb-0 text-warning">${pending.length}</h2>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card p-3 border-start border-4 border-success shadow-sm">
+            <span class="text-muted small text-uppercase fw-bold">Aprobadas (Habilitados)</span>
+            <h2 class="mb-0 text-success">${approved.length}</h2>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card p-3 border-start border-4 border-primary shadow-sm">
+            <span class="text-muted small text-uppercase fw-bold">Devueltas p/ correccion</span>
+            <h2 class="mb-0 text-primary">${returned.length}</h2>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card p-3 border-start border-4 border-danger shadow-sm">
+            <span class="text-muted small text-uppercase fw-bold">Rechazadas</span>
+            <h2 class="mb-0 text-danger">${rejected.length}</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de solicitudes -->
+      <article class="card full mt-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="mb-1">Bandeja de Solicitudes de Práctica Académica</h2>
+            <p class="muted mb-0">Revisa la documentación adjunta de los estudiantes y evalúa su habilitación formal en el sistema.</p>
+          </div>
+          <div class="table-search-bar">
+            <span class="text-muted">🔍</span>
+            <input type="text" placeholder="Filtrar por estudiante, código o estado..." data-table-filter="#director-requests-table">
+          </div>
+        </div>
+
+        <!-- Chips de Filtro Rápido por Estado -->
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-3" id="director-status-chips">
+          <span class="small text-muted fw-bold">Filtrar por:</span>
+          <button class="btn btn-sm btn-outline-primary active py-1 px-2" data-status-filter="ALL" style="font-size: 0.8rem;">Todos (${requests.length})</button>
+          <button class="btn btn-sm btn-outline-warning py-1 px-2" data-status-filter="PENDIENTE_REVISION" style="font-size: 0.8rem;">⏳ Pendientes (${pending.length})</button>
+          <button class="btn btn-sm btn-outline-success py-1 px-2" data-status-filter="APROBADA" style="font-size: 0.8rem;">✅ Aprobadas (${approved.length})</button>
+          <button class="btn btn-sm btn-outline-info py-1 px-2" data-status-filter="DEVUELTA" style="font-size: 0.8rem;">↩️ Devueltas (${returned.length})</button>
+          <button class="btn btn-sm btn-outline-danger py-1 px-2" data-status-filter="RECHAZADA" style="font-size: 0.8rem;">❌ Rechazadas (${rejected.length})</button>
+        </div>
+
+        <div class="table-wrap table-responsive">
+          <table class="table table-hover align-middle" id="director-requests-table">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Estudiante</th>
+                <th>Periodo / Nivel</th>
+                <th>Modalidad</th>
+                <th>Soportes Anexos</th>
+                <th>Radicacion</th>
+                <th>Estado</th>
+                <th class="text-end">Accion</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${studentUsers().map(student => {
+                const req = (data.requests || []).find(r => r.studentId === student.id);
+                const period = req ? data.periods.find(p => p.id === req.periodId) : (data.periods || [])[0];
+                const status = req ? req.status : 'SIN_SOLICITUD';
+                const badgeMap = {
+                  SIN_SOLICITUD: 'bg-light text-dark border',
+                  BORRADOR: 'bg-secondary',
+                  PENDIENTE_REVISION: 'bg-warning text-dark',
+                  APROBADA: 'bg-success',
+                  DEVUELTA: 'bg-primary',
+                  RECHAZADA: 'bg-danger'
+                };
+                const badgeClass = badgeMap[status] || 'bg-secondary';
+                const statusLabel = {
+                  SIN_SOLICITUD: 'Sin solicitud formal',
+                  BORRADOR: 'Borrador',
+                  PENDIENTE_REVISION: 'Pendiente de revisión',
+                  APROBADA: 'Aprobada (Habilitado)',
+                  DEVUELTA: 'Devuelta',
+                  RECHAZADA: 'Rechazada'
+                }[status] || status;
+
+                return `
+                  <tr>
+                    <td>${req ? '#' + req.id : '-'}</td>
+                    <td>
+                      <strong>${escapeHtml(student.name)}</strong>
+                      <div class="text-muted small">${escapeHtml(student.code || student.email)} • Semestre ${student.semester || 8}</div>
+                    </td>
+                    <td>
+                      <div>${escapeHtml(period?.program || 'Programa UDI')}</div>
+                      <small class="text-muted">${escapeHtml(req?.level || period?.level || 'VIII semestre')}</small>
+                    </td>
+                    <td>${escapeHtml(req?.modality || 'No definida')}</td>
+                    <td>
+                      ${req ? `
+                        <button class="btn btn-sm btn-link p-0 d-block text-start text-primary" style="font-size: 0.8rem; text-decoration: none;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Certificado de Matrícula" data-filename="${escapeHtml(req.documents?.matricula?.name || 'matricula.pdf')}">📄 Matrícula 👁️</button>
+                        <button class="btn btn-sm btn-link p-0 d-block text-start text-primary" style="font-size: 0.8rem; text-decoration: none;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Afiliación EPS/ARL" data-filename="${escapeHtml(req.documents?.epsArl?.name || 'eps_arl.pdf')}">📄 EPS/ARL 👁️</button>
+                        <button class="btn btn-sm btn-link p-0 d-block text-start text-primary" style="font-size: 0.8rem; text-decoration: none;" type="button" data-action="preview-doc" data-student="${escapeHtml(student.name)}" data-doctype="Paz y Salvo Académico" data-filename="${escapeHtml(req.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}">📄 Paz y Salvo 👁️</button>
+                      ` : '<span class="text-muted small fst-italic">Pendiente de anexar</span>'}
+                    </td>
+                    <td><small>${escapeHtml(req?.submittedAt || req?.updatedAt || 'No radicada')}</small></td>
+                    <td><span class="badge ${badgeClass}">${escapeHtml(statusLabel)}</span></td>
+                    <td class="text-end">
+                      ${req ? `
+                        <button class="btn btn-sm ${user.role === 'DIRECTOR' ? 'btn-primary' : 'btn-outline-secondary'}" data-action="open-review-modal" data-id="${req.id}">
+                          ${user.role === 'DIRECTOR' ? '🔍 Evaluar Solicitud' : '👁️ Ver Detalle'}
+                        </button>
+                      ` : '<span class="text-muted small">Sin radicar</span>'}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  `;
+}
+
+function openRequestReviewModal(requestId) {
+  const req = (data.requests || []).find(r => r.id === Number(requestId));
+  if (!req) return;
+  const student = data.users.find(u => u.id === req.studentId);
+  const period = data.periods.find(p => p.id === req.periodId);
+  const currentUserObj = currentUser();
+  const isDirector = currentUserObj?.role === "DIRECTOR";
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "sigpra-modal-backdrop";
+  backdrop.innerHTML = `
+    <div class="sigpra-modal" style="max-width: 750px;">
+      <div class="sigpra-modal-header d-flex justify-content-between align-items-center">
+        <div>
+          <h3 class="mb-0">${isDirector ? "Evaluación de Solicitud #" + req.id : "Detalle de Solicitud #" + req.id}</h3>
+          <small class="text-muted">${isDirector ? "Panel de Decisión - Dirección de Programa" : "Modo Consulta - Coordinación de Prácticas"}</small>
+        </div>
+        <button class="btn-close" data-action="close-modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="sigpra-modal-body">
+        ${!isDirector ? `
+          <div class="alert alert-info py-2 px-3 small mb-3 d-flex align-items-center gap-2" role="alert">
+            <span class="fs-4">ℹ️</span>
+            <div>
+              <strong>Rol de Coordinación (Solo Consulta):</strong> La potestad de evaluar, aprobar o rechazar la solicitud formal de práctica corresponde exclusivamente a la <strong>Dirección de Programa</strong>. Una vez aprobada, el practicante quedará disponible en el módulo de Asignaciones.
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="alert alert-light border mb-3">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Estudiante practicante:</span>
+              <strong>${escapeHtml(student?.name)}</strong> (${escapeHtml(student?.code || student?.email)})
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Periodo / Nivel:</span>
+              <strong>${escapeHtml(period?.program)} - ${escapeHtml(req.level)}</strong>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Modalidad de práctica:</span>
+              <strong>${escapeHtml(req.modality)}</strong>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Estado de la solicitud:</span>
+              <span class="badge ${req.status === 'APROBADA' ? 'bg-success' : req.status === 'PENDIENTE_REVISION' ? 'bg-warning text-dark' : req.status === 'DEVUELTA' ? 'bg-primary' : 'bg-danger'} px-2 py-1">${escapeHtml(req.status)}</span>
+            </div>
+          </div>
+        </div>
+
+        <h5 class="fw-bold mb-2 fs-6">Verificación de soportes documentales (Prerrequisitos):</h5>
+        <div class="list-group mb-3">
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>1. Certificado de Matrícula</strong>
+              <div class="text-muted small">${escapeHtml(req.documents?.matricula?.name || 'matricula.pdf')}</div>
+            </div>
+            <span class="badge bg-success">Cargado</span>
+          </div>
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>2. Afiliación EPS / ARL vigente</strong>
+              <div class="text-muted small">${escapeHtml(req.documents?.epsArl?.name || 'eps_arl.pdf')}</div>
+            </div>
+            <span class="badge bg-success">Cargado</span>
+          </div>
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>3. Paz y Salvo Académico (Créditos aprobados)</strong>
+              <div class="text-muted small">${escapeHtml(req.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}</div>
+            </div>
+            <span class="badge bg-success">Cargado</span>
+          </div>
+        </div>
+
+        ${isDirector ? `
+          <div class="mb-3">
+            <label class="form-label fw-bold">Observación / Justificación de la Dirección de Programa</label>
+            <textarea class="form-control" id="review-justification-input" rows="3" placeholder="Ingresa tus observaciones. (Obligatorio en caso de devolver para corrección o rechazar)...">${escapeHtml(req.justification || '')}</textarea>
+            <div class="form-text">La justificación es obligatoria para devolver o rechazar una solicitud.</div>
+          </div>
+        ` : `
+          ${req.justification ? `
+            <div class="mb-3 p-3 bg-light rounded border">
+              <span class="text-muted small d-block fw-bold">Concepto emitido por la Dirección de Programa:</span>
+              <p class="mb-0 fst-italic">"${escapeHtml(req.justification)}"</p>
+              ${req.reviewedAt ? `<small class="text-muted">Fecha de evaluación: ${escapeHtml(req.reviewedAt)}</small>` : ''}
+            </div>
+          ` : ''}
+        `}
+      </div>
+      <div class="sigpra-modal-footer d-flex justify-content-between flex-wrap gap-2">
+        <button class="btn btn-secondary" data-action="close-modal">${isDirector ? "Cancelar" : "Cerrar"}</button>
+        ${isDirector ? `
+          <div class="d-flex gap-2">
+            <button class="btn btn-danger" data-action="reject-request-confirm" data-id="${req.id}">
+              ❌ Rechazar
+            </button>
+            <button class="btn btn-warning text-dark" data-action="return-request-confirm" data-id="${req.id}">
+              ↩️ Devolver para corrección
+            </button>
+            <button class="btn btn-success fw-bold" data-action="approve-request-confirm" data-id="${req.id}">
+              ✅ Aprobar y Habilitar
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+}
+
+
+
+
+// Global Live Table Search Filter (Microinteraction)
+document.addEventListener("input", (e) => {
+  const filterInput = e.target.closest("[data-table-filter]");
+  if (filterInput) {
+    const targetTable = document.querySelector(filterInput.dataset.tableFilter);
+    if (!targetTable) return;
+    const term = filterInput.value.toLowerCase().trim();
+    const rows = targetTable.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(term) ? "" : "none";
+    });
+  }
+});
+
+
+/* ==========================================================================
+   NUEVAS FUNCIONES PRO: NOTIFICACIONES, CARTA OFICIAL UDI Y DRAG & DROP
+   ========================================================================== */
+
+function getNotificationsForUser(user) {
+  const list = [];
+  const reqs = data.requests || [];
+  const asgs = data.assignments || [];
+
+  if (user.role === "ESTUDIANTE") {
+    const myReq = reqs.find(r => r.studentId === user.id);
+    if (myReq) {
+      if (myReq.status === "APROBADA") {
+        list.push({
+          id: "notif-req-appr-" + myReq.id,
+          icon: "🎉",
+          title: "¡Solicitud de Práctica Aprobada!",
+          desc: "La Dirección de Programa aprobó tu solicitud formal. Quedas habilitado para asignación.",
+          time: myReq.reviewedAt || "Reciente",
+          actionView: "student-request"
+        });
+      } else if (myReq.status === "DEVUELTA") {
+        list.push({
+          id: "notif-req-ret-" + myReq.id,
+          icon: "⚠️",
+          title: "Solicitud Devuelta para Corrección",
+          desc: myReq.justification || "Revisa tus documentos de soporte.",
+          time: myReq.reviewedAt || "Urgente",
+          actionView: "student-request"
+        });
+      } else if (myReq.status === "PENDIENTE_REVISION") {
+        list.push({
+          id: "notif-req-pend-" + myReq.id,
+          icon: "⏳",
+          title: "Solicitud en Revisión",
+          desc: "Tu solicitud está en estudio por la Dirección de Programa.",
+          time: myReq.submittedAt || "En espera",
+          actionView: "student-request"
+        });
+      }
+    }
+
+    const myAsg = asgs.find(a => a.studentId === user.id && a.status === "ACTIVA");
+    if (myAsg) {
+      const inst = data.institutions.find(i => i.id === data.agreements.find(ag => ag.id === data.places.find(p => p.id === myAsg.placeId)?.agreementId)?.institutionId);
+      list.push({
+        id: "notif-asg-" + myAsg.id,
+        icon: "🏢",
+        title: "Plaza de Práctica Asignada",
+        desc: "Práctica activa en " + (inst?.name || "Institución asignada") + ".",
+        time: "Periodo 2026-2",
+        actionView: "student-progress"
+      });
+    }
+  } else if (user.role === "DIRECTOR") {
+    const pending = reqs.filter(r => r.status === "PENDIENTE_REVISION");
+    if (pending.length > 0) {
+      list.push({
+        id: "notif-dir-pend",
+        icon: "📋",
+        title: pending.length + " Solicitud(es) por Dictaminar",
+        desc: "Estudiantes practicantes esperando evaluación formal (CU-08).",
+        time: "Pendiente",
+        actionView: "director-requests"
+      });
+    }
+  } else if (user.role === "COORDINADOR") {
+    const published = (data.periods || []).filter(p => p.status === "PUBLICADO");
+    list.push({
+      id: "notif-coord-period",
+      icon: "🎓",
+      title: "Convocatoria 2026-2 Activa",
+      desc: published.length + " periodo(s) activo(s) para vinculación y seguimiento.",
+      time: "Vigente",
+      actionView: "periods"
+    });
+  } else if (user.role === "DOCENTE_ASESOR") {
+    const pendingActs = (data.activities || []).filter(a => a.status === "PENDIENTE");
+    if (pendingActs.length > 0) {
+      list.push({
+        id: "notif-doc-acts",
+        icon: "📝",
+        title: pendingActs.length + " Actividad(es) por Validar",
+        desc: "Practicantes han registrado evidencias para tu revisión.",
+        time: "Revisión",
+        actionView: "teacher-validations"
+      });
+    }
+  }
+
+  return list;
+}
+
+function renderNotificationBell(user) {
+  const notifs = getNotificationsForUser(user);
+  const unreadCount = notifs.filter(n => !readNotifIds.has(n.id)).length;
+
+  return `
+    <div class="notification-wrapper">
+      <button class="notification-bell-btn shadow-sm" type="button" data-action="toggle-notifications" aria-label="Centro de Notificaciones" title="Centro de Notificaciones">
+        🔔 ${unreadCount > 0 ? `<span class="notification-badge">${unreadCount}</span>` : ''}
+      </button>
+
+      ${notificationsOpen ? `
+        <div class="notification-dropdown" id="notification-dropdown-menu">
+          <div class="notification-header">
+            <strong class="small text-dark">🔔 Notificaciones (${notifs.length})</strong>
+            ${unreadCount > 0 ? `
+              <button class="btn btn-link p-0 text-decoration-none small text-primary" data-action="mark-all-notifications-read">
+                Marcar leídas
+              </button>
+            ` : '<span class="small text-muted">Al día</span>'}
+          </div>
+          <ul class="notification-list">
+            ${notifs.length === 0 ? `
+              <li class="p-3 text-center text-muted small">No tienes notificaciones pendientes.</li>
+            ` : notifs.map(n => `
+              <li class="notification-item ${readNotifIds.has(n.id) ? '' : 'unread'}" data-action="click-notification" data-id="${n.id}" data-view="${n.actionView}">
+                <span class="notif-icon">${n.icon}</span>
+                <div class="w-100">
+                  <div class="notif-title">${escapeHtml(n.title)}</div>
+                  <div class="notif-desc">${escapeHtml(n.desc)}</div>
+                  <div class="notif-time">${escapeHtml(n.time)}</div>
+                </div>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function openOfficialPresentationLetterModal(assignmentId) {
+  document.querySelector(".sigpra-modal-backdrop")?.remove();
+  const assignment = (data.assignments || []).find(a => a.id === Number(assignmentId)) || (data.assignments || [])[0];
+  if (!assignment) {
+    toast("No se encontró registro de asignación formal para emitir la carta.", "warning");
+    return;
+  }
+
+  const student = data.users.find(u => u.id === assignment.studentId);
+  const teacher = data.users.find(u => u.id === assignment.teacherId);
+  const place = data.places.find(p => p.id === assignment.placeId);
+  const agreement = data.agreements.find(a => a.id === place?.agreementId);
+  const institution = data.institutions.find(i => i.id === agreement?.institutionId) || { name: "Institución Aliada UDI" };
+  const period = data.periods.find(p => p.id === assignment.periodId) || data.periods[0];
+
+  const todayStr = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+  const radicadoId = "UDI-PRAC-" + period.year + "-" + String(assignment.id).padStart(4, '0');
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "sigpra-modal-backdrop";
+  backdrop.innerHTML = `
+    <div class="sigpra-modal official-letter-modal">
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-4">📜</span>
+          <h3 class="mb-0 fw-bold fs-5 text-primary">Carta Oficial de Presentación del Practicante</h3>
+        </div>
+        <button class="btn-close" type="button" data-action="close-modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="official-letter-paper" id="printable-official-letter">
+        <div class="official-letter-header">
+          <div class="d-flex align-items-center gap-3">
+            <img src="/assets/logo-sigpra.svg" alt="UDI" style="height: 48px;" onerror="this.style.display='none'" />
+            <div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #004b87; letter-spacing: 0.5px;">UNIVERSIDAD DE INVESTIGACIÓN Y DESARROLLO — UDI</div>
+              <div style="font-size: 0.78rem; color: #475569; font-weight: 600;">FACULTAD DE INGENIERÍAS Y CIENCIAS BÁSICAS</div>
+              <div style="font-size: 0.72rem; color: #64748b;">COORDINACIÓN DE PRÁCTICAS ACADÉMICAS Y PROFESIONALES (SIGPRA)</div>
+            </div>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-light text-dark border font-monospace">${radicadoId}</span>
+          </div>
+        </div>
+
+        <div class="official-letter-body">
+          <p class="mb-3 text-end small text-muted">Bucaramanga, ${todayStr}</p>
+
+          <p class="mb-3">
+            Señores:<br />
+            <strong class="text-dark">${escapeHtml(institution.name)}</strong><br />
+            <span class="text-muted small">Atención: Dirección de Gestión Humana / Coordinación de Prácticas</span><br />
+            Ciudad
+          </p>
+
+          <p class="mb-3">
+            <strong>Asunto:</strong> Presentación formal del estudiante en Práctica Académica Formativa
+          </p>
+
+          <p>
+            Cordial saludo:
+          </p>
+
+          <p>
+            Por medio de la presente, la <strong>Universidad de Investigación y Desarrollo — UDI</strong> se complace en presentar de manera formal al(la) estudiante:
+          </p>
+
+          <div class="p-3 my-3 bg-light rounded border">
+            <div class="row g-2 small">
+              <div class="col-sm-6"><strong>Estudiante:</strong> ${escapeHtml(student?.name)}</div>
+              <div class="col-sm-6"><strong>Código Estudiantil:</strong> ${escapeHtml(student?.code || 'UDI-2026-001')}</div>
+              <div class="col-sm-6"><strong>Programa Formativo:</strong> ${escapeHtml(period.program)}</div>
+              <div class="col-sm-6"><strong>Nivel de Práctica:</strong> ${escapeHtml(period.level || 'VIII semestre')}</div>
+            </div>
+          </div>
+
+          <p>
+            El(La) estudiante ha culminado a satisfacción los créditos académicos prerrequisito y cuenta con la respectiva cobertura de afiliación en salud y riesgos laborales (ARL), encontrándose plenamente habilitado(a) por la Dirección de Programa para desarrollar sus labores en el periodo académico <strong>${period.year}-${period.semester}</strong>, con una intensidad mínima de <strong>${period.minHours || 320} horas formativas</strong>.
+          </p>
+
+          <p>
+            Para el debido acompañamiento, concertación del plan de trabajo y evaluación del desempeño institucional, la Universidad ha asignado como <strong>Docente Asesor</strong> al(la) profesor(a) <strong>${escapeHtml(teacher?.name || 'Asignado')}</strong> (${escapeHtml(teacher?.email || 'docente@udi.edu.co')}).
+          </p>
+
+          <p>
+            Agradecemos de antemano el valioso respaldo que su entidad brinda a nuestros futuros profesionales.
+          </p>
+
+          <div class="official-letter-signatures">
+            <div>
+              <div class="letter-signature-line">
+                <strong>Dirección de Programa Académico</strong><br />
+                Universidad de Investigación y Desarrollo - UDI
+              </div>
+            </div>
+            <div>
+              <div class="letter-signature-line">
+                <strong>${escapeHtml(teacher?.name || 'Docente Asesor')}</strong><br />
+                Tutor Académico Asignado
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="letter-qr-stamp">
+              <span class="fs-4">🔐</span>
+              <div>
+                <strong>Expediente Oficial Verificado</strong><br />
+                <span class="text-muted">Ley 30 de 1992 · Decreto 1075 de 2015</span>
+              </div>
+            </div>
+            <small class="text-muted font-monospace">Hash de Validación: ${radicadoId}-AUTH</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="sigpra-modal-footer d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+        <span class="small text-muted">Documento oficial generado por SIGPRA UDI</span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary btn-sm fw-bold shadow-sm" type="button" onclick="window.print()">
+            🖨️ Imprimir Carta / Guardar PDF
+          </button>
+          <button class="btn btn-secondary btn-sm" type="button" data-action="close-modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+}
+
+function setupDropzones() {
+  document.querySelectorAll(".sigpra-dropzone").forEach(dropzone => {
+    const input = dropzone.querySelector(".dropzone-input");
+    if (!input) return;
+
+    ["dragenter", "dragover"].forEach(eventName => {
+      dropzone.addEventListener(eventName, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add("drag-over");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(eventName => {
+      dropzone.addEventListener(eventName, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove("drag-over");
+      });
+    });
+
+    dropzone.addEventListener("drop", e => {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        input.files = files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+
+    dropzone.addEventListener("click", e => {
+      if (e.target.tagName !== "BUTTON") {
+        input.click();
+      }
+    });
+
+    input.addEventListener("change", () => {
+      const file = input.files[0];
+      if (file) {
+        const nameEl = dropzone.querySelector(".dropzone-file-name");
+        if (nameEl) nameEl.textContent = file.name + " (" + (file.size / 1024).toFixed(0) + " KB)";
+        dropzone.classList.add("has-file");
+        toast("Archivo preparado: " + file.name, "success");
+      }
+    });
+  });
+}

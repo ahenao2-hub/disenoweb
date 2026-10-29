@@ -11,13 +11,15 @@ const routes_1 = require("./postgres/routes");
 const routes_2 = require("./routes");
 function createApp() {
     const app = (0, express_1.default)();
-    const publicDir = process.cwd();
+    const publicDir = process.env.PUBLIC_DIR || path_1.default.resolve(__dirname, '..');
     app.use((0, cors_1.default)());
     app.use(express_1.default.json({ limit: "2mb" }));
     app.use("/node_modules/bootstrap/dist", express_1.default.static(path_1.default.join(publicDir, "node_modules/bootstrap/dist")));
+    app.use("/assets", express_1.default.static(path_1.default.join(publicDir, "assets")));
     app.use("/api", process.env.SIGPRA_STORAGE === "postgres" ? routes_1.postgresRouter : routes_2.apiRouter);
     app.get("/", (_req, res) => res.sendFile(path_1.default.join(publicDir, "index.html")));
     app.get("/app.js", (_req, res) => res.sendFile(path_1.default.join(publicDir, "app.js")));
     app.get("/styles.css", (_req, res) => res.sendFile(path_1.default.join(publicDir, "styles.css")));
+    app.get("/login-photo.jpg", (_req, res) => res.sendFile(path_1.default.join(publicDir, "login-photo.jpg")));
     return app;
 }
