@@ -234,6 +234,7 @@ let currentView = "dashboard";
 let reportFilters = { periodId: "", program: "", institutionId: "", teacherId: "" };
 let directorFilter = "ALL";
 let studentRequestTab = "status";
+let directorStatusFilter = "ALL";
 let notificationsOpen = false;
 const readNotifIds = new Set();
 let authMode = "login";
@@ -627,7 +628,8 @@ function navForRole(role) {
     ],
     DIRECTOR: [
       ...shared,
-      { id: "director-requests", label: "Solicitudes de práctica", group: "Gestion de practicas", description: "Revisa, aprueba, devuelve o rechaza solicitudes de practica." },
+      { id: "director-requests", label: "Solicitudes de práctica", group: "Gestion de practicas", description: "Revisa, aprueba, devuelve o rechaza solicitudes de practica (CU-08)." },
+      { id: "assignments", label: "Asignaciones", group: "Gestion de practicas", description: "Asigna plazas institucionales y docentes asesores a los estudiantes habilitados (CU-03)." },
       { id: "reports", label: "Consolidado", group: "Consulta", description: "Consulta el avance general de las practicas." },
       { id: "audit", label: "Auditoria", group: "Consulta", description: "Revisa las acciones registradas en el sistema." }
     ]
@@ -1150,7 +1152,7 @@ function renderPeriods() {
         <h2>Periodos registrados</h2>
         <div class="table-wrap table-responsive">
           <table class="table table-hover align-middle">
-            <thead><tr><th>Programa</th><th>Nivel</th><th>Periodo</th><th>Vigencia</th><th>Reporte hasta</th><th>Horas</th><th>Evaluacion</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Programa</th><th>Nivel</th><th>Periodo</th><th>Vigencia</th><th>Reporte hasta</th><th>Horas</th><th>Evaluacion</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
             <tbody>
               ${data.periods.map((period) => `
                 <tr>
@@ -1162,6 +1164,12 @@ function renderPeriods() {
                   <td>${period.minHours}</td>
                   <td>${(period.rubric || []).map((criterion) => `${escapeHtml(criterion.name)} (${criterion.weight}%)`).join("<br>") || "Sin criterios configurados"}</td>
                   <td>${statusTag(period.status)}${period.status === "BORRADOR" ? `<br><button class="btn btn-outline-secondary button" data-modal="period" data-id="${period.id}">Continuar borrador</button>` : ""}</td>
+                  <td class="text-end">
+                    <div class="d-flex justify-content-end gap-1">
+                      <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.78rem;" data-action="edit-period" data-id="${period.id}" title="Editar periodo">✏️ Editar</button>
+                      <button class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 0.78rem;" data-action="delete-period" data-id="${period.id}" title="Eliminar periodo">🗑️ Borrar</button>
+                    </div>
+                  </td>
                 </tr>
               `).join("") || `<tr><td colspan="8">No hay periodos registrados.</td></tr>`}
             </tbody>
@@ -1242,6 +1250,15 @@ function renderAssignments() {
   const assignments = data.assignments;
   return `
     <section class="stack">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2 p-2 bg-light rounded border">
+        <div>
+          <strong class="d-block text-primary">Gestión de Asignaciones y Docentes Tutores</strong>
+          <small class="text-muted">Vincula estudiantes habilitados con plazas institucionales y docentes asesores.</small>
+        </div>
+        <button class="btn btn-sm btn-success fw-bold shadow-sm" type="button" data-action="open-new-teacher-modal">
+          ➕ Registrar Nuevo Docente Asesor
+        </button>
+      </div>
       ${assignmentWorkflowForm()}
       <details class="assignment-history">
         <summary>Asignaciones registradas (${assignments.length})</summary>
@@ -2358,10 +2375,7 @@ function handleSubmit(form, submitter) {
       toast("Ya existe un periodo para ese programa, ano y semestre.");
       return;
     }
-    if (existingPeriod && existingPeriod.status !== "BORRADOR") {
-      toast("Solo se pueden editar periodos guardados como borrador.");
-      return;
-    }
+    // Permitir actualizar periodo académico existente
     if (periodStatus === "PUBLICADO" && Number(formData.minHours) < minimumForProgram) {
       toast(`Las horas minimas no pueden ser inferiores al minimo anterior del programa (${minimumForProgram}).`);
       return;
@@ -2856,6 +2870,58 @@ document.addEventListener("change", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  // Filtro de chips y tarjetas en la bandeja del Director
+  const statusFilterBtn = event.target.closest('[data-status-filter]');
+  if (statusFilterBtn) {
+    event.stopPropagation();
+    const filter = statusFilterBtn.getAttribute('data-status-filter');
+    if (filter) {
+      directorStatusFilter = filter;
+      render();
+    }
+    return;
+  }
+
+  // Modal para agregar nuevo docente asesor
+  const newTeacherBtn = event.target.closest('[data-action="open-new-teacher-modal"]');
+  if (newTeacherBtn) {
+    event.stopPropagation();
+    openNewTeacherModal();
+    return;
+  }
+
+  // Editar periodo académico
+  const editPeriodBtn = event.target.closest('[data-action="edit-period"]');
+  if (editPeriodBtn) {
+    event.stopPropagation();
+    const pId = editPeriodBtn.getAttribute('data-id');
+    openModal('period', pId);
+    return;
+  }
+
+  // Eliminar periodo académico
+  const deletePeriodBtn = event.target.closest('[data-action="delete-period"]');
+  if (deletePeriodBtn) {
+    event.stopPropagation();
+    const pId = Number(deletePeriodBtn.getAttribute('data-id'));
+    const hasAssignments = (data.assignments || []).some(a => a.periodId === pId);
+    const hasRequests = (data.requests || []).some(r => r.periodId === pId);
+
+    if (hasAssignments || hasRequests) {
+      toast("No se puede eliminar este periodo porque ya tiene estudiantes o prácticas vinculadas.", "warning");
+      return;
+    }
+
+    if (confirm("¿Estás seguro de eliminar este periodo académico? Esta acción no se puede deshacer.")) {
+      data.periods = data.periods.filter(p => p.id !== pId);
+      audit(`Eliminó periodo académico ID #${pId}`, "PERIODO");
+      saveData();
+      toast("Periodo académico eliminado correctamente.", "success");
+      render();
+    }
+    return;
+  }
+
   const notifToggle = event.target.closest('[data-action="toggle-notifications"]');
   if (notifToggle) {
     event.stopPropagation();
@@ -3644,36 +3710,48 @@ function renderDirectorRequests(user) {
 
   return `
     <section class="stack">
-      <!-- Tarjetas de metricas rapidas -->
+      <!-- Tarjetas de metricas rapidas interactivas -->
       <div class="row g-3">
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-warning shadow-sm">
+          <div class="card p-3 border-start border-4 border-warning shadow-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'ring-2 ring-warning' : ''}" data-status-filter="PENDIENTE_REVISION" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar pendientes" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
             <span class="text-muted small text-uppercase fw-bold">Pendientes de Revision</span>
-            <h2 class="mb-0 text-warning">${pending.length}</h2>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <h2 class="mb-0 text-warning">${pending.length}</h2>
+              <span class="fs-4">⏳</span>
+            </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-success shadow-sm">
+          <div class="card p-3 border-start border-4 border-success shadow-sm ${directorStatusFilter === 'APROBADA' ? 'ring-2 ring-success' : ''}" data-status-filter="APROBADA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar aprobadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
             <span class="text-muted small text-uppercase fw-bold">Aprobadas (Habilitados)</span>
-            <h2 class="mb-0 text-success">${approved.length}</h2>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <h2 class="mb-0 text-success">${approved.length}</h2>
+              <span class="fs-4">✅</span>
+            </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-primary shadow-sm">
+          <div class="card p-3 border-start border-4 border-primary shadow-sm ${directorStatusFilter === 'DEVUELTA' ? 'ring-2 ring-primary' : ''}" data-status-filter="DEVUELTA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar devueltas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
             <span class="text-muted small text-uppercase fw-bold">Devueltas p/ correccion</span>
-            <h2 class="mb-0 text-primary">${returned.length}</h2>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <h2 class="mb-0 text-primary">${returned.length}</h2>
+              <span class="fs-4">↩️</span>
+            </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-danger shadow-sm">
+          <div class="card p-3 border-start border-4 border-danger shadow-sm ${directorStatusFilter === 'RECHAZADA' ? 'ring-2 ring-danger' : ''}" data-status-filter="RECHAZADA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar rechazadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
             <span class="text-muted small text-uppercase fw-bold">Rechazadas</span>
-            <h2 class="mb-0 text-danger">${rejected.length}</h2>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <h2 class="mb-0 text-danger">${rejected.length}</h2>
+              <span class="fs-4">❌</span>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Tabla de solicitudes -->
-      <article class="card full mt-3">
+      <article class="card full mt-3 shadow-sm">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <div>
             <h2 class="mb-1">Bandeja de Solicitudes de Práctica Académica</h2>
@@ -3685,14 +3763,14 @@ function renderDirectorRequests(user) {
           </div>
         </div>
 
-        <!-- Chips de Filtro Rápido por Estado -->
+        <!-- Chips de Filtro Rápido por Estado Interactivos -->
         <div class="d-flex align-items-center gap-2 flex-wrap mb-3" id="director-status-chips">
           <span class="small text-muted fw-bold">Filtrar por:</span>
-          <button class="btn btn-sm btn-outline-primary active py-1 px-2" data-status-filter="ALL" style="font-size: 0.8rem;">Todos (${requests.length})</button>
-          <button class="btn btn-sm btn-outline-warning py-1 px-2" data-status-filter="PENDIENTE_REVISION" style="font-size: 0.8rem;">⏳ Pendientes (${pending.length})</button>
-          <button class="btn btn-sm btn-outline-success py-1 px-2" data-status-filter="APROBADA" style="font-size: 0.8rem;">✅ Aprobadas (${approved.length})</button>
-          <button class="btn btn-sm btn-outline-info py-1 px-2" data-status-filter="DEVUELTA" style="font-size: 0.8rem;">↩️ Devueltas (${returned.length})</button>
-          <button class="btn btn-sm btn-outline-danger py-1 px-2" data-status-filter="RECHAZADA" style="font-size: 0.8rem;">❌ Rechazadas (${rejected.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'ALL' ? 'btn-primary active text-white' : 'btn-outline-primary'} py-1 px-2" data-status-filter="ALL" style="font-size: 0.8rem;">Todos (${requests.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'btn-warning active text-dark fw-bold' : 'btn-outline-warning'} py-1 px-2" data-status-filter="PENDIENTE_REVISION" style="font-size: 0.8rem;">⏳ Pendientes (${pending.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'APROBADA' ? 'btn-success active text-white fw-bold' : 'btn-outline-success'} py-1 px-2" data-status-filter="APROBADA" style="font-size: 0.8rem;">✅ Aprobadas (${approved.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'DEVUELTA' ? 'btn-info active text-white fw-bold' : 'btn-outline-info'} py-1 px-2" data-status-filter="DEVUELTA" style="font-size: 0.8rem;">↩️ Devueltas (${returned.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'RECHAZADA' ? 'btn-danger active text-white fw-bold' : 'btn-outline-danger'} py-1 px-2" data-status-filter="RECHAZADA" style="font-size: 0.8rem;">❌ Rechazadas (${rejected.length})</button>
         </div>
 
         <div class="table-wrap table-responsive">
@@ -3710,7 +3788,12 @@ function renderDirectorRequests(user) {
               </tr>
             </thead>
             <tbody>
-              ${studentUsers().map(student => {
+              ${studentUsers().filter(student => {
+                const req = (data.requests || []).find(r => r.studentId === student.id);
+                const status = req ? req.status : 'SIN_SOLICITUD';
+                if (directorStatusFilter === 'ALL') return true;
+                return status === directorStatusFilter;
+              }).map(student => {
                 const req = (data.requests || []).find(r => r.studentId === student.id);
                 const period = req ? data.periods.find(p => p.id === req.periodId) : (data.periods || [])[0];
                 const status = req ? req.status : 'SIN_SOLICITUD';
@@ -3732,8 +3815,33 @@ function renderDirectorRequests(user) {
                   RECHAZADA: 'Rechazada'
                 }[status] || status;
 
+                const isPending = req?.status === "PENDIENTE_REVISION";
+                const isApproved = req?.status === "APROBADA";
+                const isReturned = req?.status === "DEVUELTA";
+                const isRejected = req?.status === "RECHAZADA";
+
+                const actionButtonText = isPending && user.role === 'DIRECTOR'
+                  ? '📝 Evaluar Solicitud'
+                  : isApproved
+                  ? '👁️ Ver Detalle (Aprobada)'
+                  : isReturned
+                  ? '👁️ Ver Observación'
+                  : isRejected
+                  ? '👁️ Ver Causal'
+                  : '👁️ Ver Detalle';
+
+                const buttonClass = isPending && user.role === 'DIRECTOR'
+                  ? 'btn-primary fw-bold shadow-sm'
+                  : isApproved
+                  ? 'btn-outline-success'
+                  : isReturned
+                  ? 'btn-outline-info'
+                  : isRejected
+                  ? 'btn-outline-danger'
+                  : 'btn-outline-secondary';
+
                 return `
-                  <tr>
+                  <tr data-status="${status}">
                     <td>${req ? '#' + req.id : '-'}</td>
                     <td>
                       <strong>${escapeHtml(student.name)}</strong>
@@ -3755,14 +3863,21 @@ function renderDirectorRequests(user) {
                     <td><span class="badge ${badgeClass}">${escapeHtml(statusLabel)}</span></td>
                     <td class="text-end">
                       ${req ? `
-                        <button class="btn btn-sm ${user.role === 'DIRECTOR' ? 'btn-primary' : 'btn-outline-secondary'}" data-action="open-review-modal" data-id="${req.id}">
-                          ${user.role === 'DIRECTOR' ? '🔍 Evaluar Solicitud' : '👁️ Ver Detalle'}
+                        <button class="btn btn-sm ${buttonClass}" data-action="open-review-modal" data-id="${req.id}">
+                          ${actionButtonText}
                         </button>
                       ` : '<span class="text-muted small">Sin radicar</span>'}
                     </td>
                   </tr>
                 `;
-              }).join('')}
+              }).join('') || `
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">
+                    No se encontraron solicitudes con el filtro seleccionado (<strong>${directorStatusFilter}</strong>).
+                    <div class="mt-2"><button class="btn btn-sm btn-link" data-status-filter="ALL">Mostrar todas</button></div>
+                  </td>
+                </tr>
+              `}
             </tbody>
           </table>
         </div>
@@ -3778,6 +3893,7 @@ function openRequestReviewModal(requestId) {
   const period = data.periods.find(p => p.id === req.periodId);
   const currentUserObj = currentUser();
   const isDirector = currentUserObj?.role === "DIRECTOR";
+  const isPending = req.status === "PENDIENTE_REVISION";
 
   const backdrop = document.createElement("div");
   backdrop.className = "sigpra-modal-backdrop";
@@ -3785,13 +3901,24 @@ function openRequestReviewModal(requestId) {
     <div class="sigpra-modal" style="max-width: 750px;">
       <div class="sigpra-modal-header d-flex justify-content-between align-items-center">
         <div>
-          <h3 class="mb-0">${isDirector ? "Evaluación de Solicitud #" + req.id : "Detalle de Solicitud #" + req.id}</h3>
-          <small class="text-muted">${isDirector ? "Panel de Decisión - Dirección de Programa" : "Modo Consulta - Coordinación de Prácticas"}</small>
+          <h3 class="mb-0">${isPending ? (isDirector ? "Evaluación de Solicitud #" + req.id : "Detalle de Solicitud #" + req.id) : "Expediente de Solicitud #" + req.id}</h3>
+          <small class="text-muted">${isPending ? (isDirector ? "Panel de Decisión - Dirección de Programa" : "Modo Consulta - Coordinación de Prácticas") : "Dictamen Registrado en Firme - Trámite Académico CU-08"}</small>
         </div>
         <button class="btn-close" data-action="close-modal" aria-label="Cerrar"></button>
       </div>
       <div class="sigpra-modal-body">
-        ${!isDirector ? `
+        ${!isPending ? `
+          <div class="alert ${req.status === 'APROBADA' ? 'alert-success border-success' : req.status === 'DEVUELTA' ? 'alert-info border-info' : 'alert-danger border-danger'} mb-3 shadow-sm">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="fs-4">${req.status === 'APROBADA' ? '✅' : req.status === 'DEVUELTA' ? '↩️' : '❌'}</span>
+              <strong class="fs-6">${req.status === 'APROBADA' ? 'Solicitud Aprobada en Firme (Estudiante Habilitado para Asignación)' : req.status === 'DEVUELTA' ? 'Solicitud Devuelta para Corrección' : 'Solicitud Rechazada'}</strong>
+            </div>
+            <p class="mb-1 small"><strong>Concepto emitido por la Dirección de Programa:</strong> "${escapeHtml(req.justification || 'Verificación documental completada satisfactoriamente.')}"</p>
+            <div class="small text-muted">
+              Evaluada el: <strong>${escapeHtml(req.reviewedAt || req.updatedAt || 'Reciente')}</strong> &bull; Estado definitivo inmutable.
+            </div>
+          </div>
+        ` : !isDirector ? `
           <div class="alert alert-info py-2 px-3 small mb-3 d-flex align-items-center gap-2" role="alert">
             <span class="fs-4">ℹ️</span>
             <div>
@@ -3816,7 +3943,7 @@ function openRequestReviewModal(requestId) {
             </div>
             <div class="col-md-6">
               <span class="text-muted small d-block">Estado de la solicitud:</span>
-              <span class="badge ${req.status === 'APROBADA' ? 'bg-success' : req.status === 'PENDIENTE_REVISION' ? 'bg-warning text-dark' : req.status === 'DEVUELTA' ? 'bg-primary' : 'bg-danger'} px-2 py-1">${escapeHtml(req.status)}</span>
+              <span class="badge ${req.status === 'APROBADA' ? 'bg-success' : req.status === 'PENDIENTE_REVISION' ? 'bg-warning text-dark' : req.status === 'DEVUELTA' ? 'bg-info text-white' : 'bg-danger'} px-2 py-1">${escapeHtml(req.status)}</span>
             </div>
           </div>
         </div>
@@ -3828,43 +3955,36 @@ function openRequestReviewModal(requestId) {
               <strong>1. Certificado de Matrícula</strong>
               <div class="text-muted small">${escapeHtml(req.documents?.matricula?.name || 'matricula.pdf')}</div>
             </div>
-            <span class="badge bg-success">Cargado</span>
+            <button class="btn btn-outline-primary btn-sm py-1 px-2" data-action="preview-doc" data-student="${escapeHtml(student?.name)}" data-doctype="Certificado de Matrícula" data-filename="${escapeHtml(req.documents?.matricula?.name || 'matricula.pdf')}">👁️ Auditar</button>
           </div>
           <div class="list-group-item d-flex justify-content-between align-items-center">
             <div>
               <strong>2. Afiliación EPS / ARL vigente</strong>
               <div class="text-muted small">${escapeHtml(req.documents?.epsArl?.name || 'eps_arl.pdf')}</div>
             </div>
-            <span class="badge bg-success">Cargado</span>
+            <button class="btn btn-outline-primary btn-sm py-1 px-2" data-action="preview-doc" data-student="${escapeHtml(student?.name)}" data-doctype="Afiliación EPS/ARL" data-filename="${escapeHtml(req.documents?.epsArl?.name || 'eps_arl.pdf')}">👁️ Auditar</button>
           </div>
           <div class="list-group-item d-flex justify-content-between align-items-center">
             <div>
               <strong>3. Paz y Salvo Académico (Créditos aprobados)</strong>
               <div class="text-muted small">${escapeHtml(req.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}</div>
             </div>
-            <span class="badge bg-success">Cargado</span>
+            <button class="btn btn-outline-primary btn-sm py-1 px-2" data-action="preview-doc" data-student="${escapeHtml(student?.name)}" data-doctype="Paz y Salvo Académico" data-filename="${escapeHtml(req.documents?.pazYSalvo?.name || 'paz_y_salvo.pdf')}">👁️ Auditar</button>
           </div>
         </div>
 
-        ${isDirector ? `
+        ${isDirector && isPending ? `
           <div class="mb-3">
-            <label class="form-label fw-bold">Observación / Justificación de la Dirección de Programa</label>
-            <textarea class="form-control" id="review-justification-input" rows="3" placeholder="Ingresa tus observaciones. (Obligatorio en caso de devolver para corrección o rechazar)...">${escapeHtml(req.justification || '')}</textarea>
-            <div class="form-text">La justificación es obligatoria para devolver o rechazar una solicitud.</div>
+            <label class="form-label fw-bold">Observación / Justificación del Dictamen *</label>
+            <textarea class="form-control" id="review-justification-input" rows="3" placeholder="Ingresa tus observaciones. (Obligatorio en caso de devolver para corrección o rechazar; opcional si se aprueba)...">${escapeHtml(req.justification || '')}</textarea>
+            <div class="form-text">Al aprobar, el estudiante quedará habilitado de manera definitiva para la asignación de plaza y tutor.</div>
           </div>
-        ` : `
-          ${req.justification ? `
-            <div class="mb-3 p-3 bg-light rounded border">
-              <span class="text-muted small d-block fw-bold">Concepto emitido por la Dirección de Programa:</span>
-              <p class="mb-0 fst-italic">"${escapeHtml(req.justification)}"</p>
-              ${req.reviewedAt ? `<small class="text-muted">Fecha de evaluación: ${escapeHtml(req.reviewedAt)}</small>` : ''}
-            </div>
-          ` : ''}
-        `}
+        ` : ''}
       </div>
+
       <div class="sigpra-modal-footer d-flex justify-content-between flex-wrap gap-2">
-        <button class="btn btn-secondary" data-action="close-modal">${isDirector ? "Cancelar" : "Cerrar"}</button>
-        ${isDirector ? `
+        <button class="btn btn-secondary" data-action="close-modal">${isDirector && isPending ? "Cancelar" : "Cerrar"}</button>
+        ${isDirector && isPending ? `
           <div class="d-flex gap-2">
             <button class="btn btn-danger" data-action="reject-request-confirm" data-id="${req.id}">
               ❌ Rechazar
@@ -3872,39 +3992,18 @@ function openRequestReviewModal(requestId) {
             <button class="btn btn-warning text-dark" data-action="return-request-confirm" data-id="${req.id}">
               ↩️ Devolver para corrección
             </button>
-            <button class="btn btn-success fw-bold" data-action="approve-request-confirm" data-id="${req.id}">
-              ✅ Aprobar y Habilitar
+            <button class="btn btn-success fw-bold px-3 shadow-sm" data-action="approve-request-confirm" data-id="${req.id}">
+              ✅ Aprobar Solicitud
             </button>
           </div>
-        ` : ''}
+        ` : `
+          <span class="small text-muted py-1">Dictamen registrado formalmente &bull; Solo lectura</span>
+        `}
       </div>
     </div>
   `;
   document.body.appendChild(backdrop);
 }
-
-
-
-
-// Global Live Table Search Filter (Microinteraction)
-document.addEventListener("input", (e) => {
-  const filterInput = e.target.closest("[data-table-filter]");
-  if (filterInput) {
-    const targetTable = document.querySelector(filterInput.dataset.tableFilter);
-    if (!targetTable) return;
-    const term = filterInput.value.toLowerCase().trim();
-    const rows = targetTable.querySelectorAll("tbody tr");
-    rows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(term) ? "" : "none";
-    });
-  }
-});
-
-
-/* ==========================================================================
-   NUEVAS FUNCIONES PRO: NOTIFICACIONES, CARTA OFICIAL UDI Y DRAG & DROP
-   ========================================================================== */
 
 function getNotificationsForUser(user) {
   const list = [];
@@ -4209,5 +4308,75 @@ function setupDropzones() {
         toast("Archivo preparado: " + file.name, "success");
       }
     });
+  });
+}
+
+function openNewTeacherModal() {
+  document.querySelector(".sigpra-modal-backdrop")?.remove();
+  const backdrop = document.createElement("div");
+  backdrop.className = "sigpra-modal-backdrop";
+  backdrop.innerHTML = `
+    <div class="sigpra-modal" style="max-width: 520px;">
+      <div class="sigpra-modal-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">👨‍🏫 Registrar Nuevo Docente Asesor</h3>
+        <button class="btn-close" data-action="close-modal" aria-label="Cerrar"></button>
+      </div>
+      <form id="new-teacher-form" class="my-3">
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Nombre completo del Docente Asesor *</label>
+          <input type="text" class="form-control" name="name" placeholder="Ej: Dra. Claudia Patricia Peña" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Correo electrónico institucional (@udi.edu.co) *</label>
+          <input type="email" class="form-control" name="email" placeholder="docente@udi.edu.co" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Área formativa o Especialidad</label>
+          <input type="text" class="form-control" name="specialty" placeholder="Ej: Práctica Pedagógica, Redes, Software..." />
+        </div>
+        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+          <button type="button" class="btn btn-secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn btn-success fw-bold">Guardar Docente</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+
+  backdrop.querySelector("#new-teacher-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const name = String(fd.get("name") || "").trim();
+    const email = String(fd.get("email") || "").trim().toLowerCase();
+    const specialty = String(fd.get("specialty") || "").trim();
+
+    if (!name || !email) {
+      toast("El nombre y el correo son obligatorios.", "warning");
+      return;
+    }
+    if (data.users.some(u => u.email.toLowerCase() === email)) {
+      toast("Ya existe un usuario registrado con ese correo institucional.", "warning");
+      return;
+    }
+
+    const nameParts = name.split(" ");
+    const initials = nameParts.length >= 2 ? (nameParts[0][0] + nameParts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+
+    const newTeacher = {
+      id: nextId(data.users),
+      name,
+      email,
+      password: "123456",
+      role: "DOCENTE_ASESOR",
+      initials,
+      specialty: specialty || "Docente Asesor de Práctica"
+    };
+
+    data.users.push(newTeacher);
+    audit(`Registro de nuevo docente asesor: ${name} (${email})`, "USUARIO");
+    saveData();
+    backdrop.remove();
+    toast(`Docente asesor ${name} registrado exitosamente.`, "success");
+    render();
   });
 }
