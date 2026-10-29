@@ -1185,19 +1185,29 @@ function renderPeriods() {
 function renderAgreements() {
   return `
     <section class="stack">
-      <article class="card full">
-        <div class="toolbar">
-          <button class="btn btn-primary button primary" data-modal="institution">Nueva institucion</button>
+      <article class="card full shadow-sm">
+        <div class="toolbar d-flex gap-2 flex-wrap mb-2">
+          <button class="btn btn-primary button primary" data-modal="institution">➕ Nueva Institución</button>
+          <button class="btn btn-outline-primary button" data-modal="place">➕ Registrar Nueva Plaza</button>
         </div>
         <h2>Registrar convenio y plaza</h2>
-        <p class="muted">Selecciona una institucion y completa en orden el convenio y la plaza ofrecida. Los convenios vencidos o sin documento quedan inactivos y sus plazas no se ofrecen para asignacion.</p>
+        <p class="muted">Selecciona una institución y completa en orden el convenio y la plaza ofrecida. Los convenios vencidos o sin documento quedan inactivos y sus plazas no se ofrecen para asignación.</p>
         ${modalForm("agreement-place")}
       </article>
-      <article class="card full">
-        <h2>Convenios y plazas registrados</h2>
+      <article class="card full shadow-sm">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="mb-0">Convenios Interinstitucionales Registrados</h2>
+            <p class="muted small mb-0">Acuerdos formales suscritos con instituciones para prácticas académicas.</p>
+          </div>
+          <div class="table-search-bar">
+            <span class="text-muted">🔍</span>
+            <input type="text" placeholder="Filtrar por institución o número..." data-table-filter="#agreements-table">
+          </div>
+        </div>
         <div class="table-wrap table-responsive">
-          <table class="table table-hover align-middle">
-            <thead><tr><th>Institucion</th><th>Convenio</th><th>Vigencia</th><th>Plazas</th><th>Cupos</th><th>Estado</th></tr></thead>
+          <table class="table table-hover align-middle" id="agreements-table">
+            <thead class="table-light"><tr><th>INSTITUCIÓN</th><th>CONVENIO</th><th>VIGENCIA</th><th>PLAZAS</th><th>CUPOS</th><th>ESTADO</th></tr></thead>
             <tbody>
               ${data.agreements.map((agreement) => {
                 const institution = data.institutions.find((item) => item.id === agreement.institutionId);
@@ -1207,11 +1217,11 @@ function renderAgreements() {
                   : 0;
                 return `
                   <tr>
-                    <td>${escapeHtml(institution?.name)}</td>
-                    <td>${escapeHtml(agreement.number)}</td>
-                    <td>${moneyDate(agreement.start)} - ${moneyDate(agreement.end)}</td>
-                    <td>${places.length}</td>
-                    <td>${cupos}</td>
+                    <td><strong>${escapeHtml(institution?.name || 'Institución')}</strong></td>
+                    <td><span class="badge bg-light text-dark border font-monospace">${escapeHtml(agreement.number)}</span></td>
+                    <td>${moneyDate(agreement.start)} &bull; ${moneyDate(agreement.end)}</td>
+                    <td>${places.length} plaza(s)</td>
+                    <td><strong>${cupos}</strong> disponible(s)</td>
                     <td>${statusTag(agreementStatus(agreement))}</td>
                   </tr>
                 `;
@@ -1343,10 +1353,15 @@ function assignmentWorkflowForm() {
             `).join("")}
           </select>
         </label>
-        <label class="full-field">Estudiante habilitado
+        <label class="full-field">Estudiante habilitado *
           <select class="form-select" name="studentId" required>
-            <option value="">-- Seleccione un estudiante --</option>
-            ${studentUsers().map((student) => `<option value="${student.id}">${escapeHtml(student.name)} - ${escapeHtml(student.code || student.email)}</option>`).join("")}
+            <option value="">-- Seleccione un estudiante practicante --</option>
+            ${studentUsers().map((student) => {
+              const hasActive = data.assignments.some(a => a.studentId === student.id && a.status === "ACTIVA");
+              const isApproved = student.enabledForAssignment || (data.requests || []).some(r => r.studentId === student.id && r.status === "APROBADA");
+              const tag = hasActive ? " [⚡ Práctica Asignada]" : isApproved ? " [✅ HABILITADO]" : " [⏳ Pendiente de Habilitación]";
+              return `<option value="${student.id}">${escapeHtml(student.name)} - ${escapeHtml(student.code || student.email)}${tag}</option>`;
+            }).join("")}
           </select>
         </label>
         <div class="full-field" id="assignment-student-details" hidden></div>
@@ -1553,12 +1568,12 @@ function studentActivitiesTable(activities) {
   `;
 }
 
-function activitiesTable(activities, withActions = false) {
+function activitiesTable(activities, withActions = false, tableId = "") {
   if (!activities.length) return `<div class="empty">No hay actividades registradas.</div>`;
   return `
     <div class="table-wrap table-responsive">
-      <table class="table table-hover align-middle">
-        <thead><tr><th>Fecha</th><th>Estudiante</th><th>Actividad</th><th>Horas</th><th>Estado</th><th>Observacion</th>${withActions ? "<th>Accion</th>" : ""}</tr></thead>
+      <table class="table table-hover align-middle" ${tableId ? `id="${tableId}"` : ""}>
+        <thead class="table-light"><tr><th>Fecha</th><th>Estudiante</th><th>Actividad</th><th>Horas</th><th>Estado</th><th>Observación</th>${withActions ? "<th class='text-end'>Acción</th>" : ""}</tr></thead>
         <tbody>
           ${activities.map((activity) => {
             const assignment = data.assignments.find((item) => item.id === activity.assignmentId);
@@ -1566,12 +1581,12 @@ function activitiesTable(activities, withActions = false) {
             return `
               <tr>
                 <td>${moneyDate(activity.date)}</td>
-                <td>${escapeHtml(d.student?.name || "")}</td>
-                <td><strong>${escapeHtml(activity.type)}</strong><br><span class="muted">${escapeHtml(activity.description)}</span></td>
-                <td>${activity.hours}</td>
+                <td><strong>${escapeHtml(d.student?.name || "")}</strong></td>
+                <td><strong>${escapeHtml(activity.type)}</strong><br><span class="muted small">${escapeHtml(activity.description)}</span></td>
+                <td><span class="badge bg-light text-dark border fw-bold">${activity.hours} hrs</span></td>
                 <td>${statusTag(activity.status)}</td>
-                <td>${escapeHtml(activity.observation || "Sin observacion")}</td>
-                ${withActions ? `<td><button class="btn btn-outline-secondary button" data-modal="validate" data-id="${activity.id}">Revisar</button></td>` : ""}
+                <td>${escapeHtml(activity.observation || "Sin observación")}</td>
+                ${withActions ? `<td class="text-end"><button class="btn btn-sm btn-primary fw-bold shadow-sm" data-modal="validate" data-id="${activity.id}">🔍 Revisar y Validar</button></td>` : ""}
               </tr>
             `;
           }).join("")}
@@ -1716,7 +1731,24 @@ function renderStudentProgress(user, compact = false) {
 function renderTeacherValidations(user) {
   const assignments = data.assignments.filter((assignment) => assignment.teacherId === user.id).map((assignment) => assignment.id);
   const activities = data.activities.filter((activity) => assignments.includes(activity.assignmentId) && activity.status === "PENDIENTE");
-  return `<section class="stack"><article class="card full"><h2>Actividades pendientes</h2><p class="muted">Selecciona una actividad para revisar su descripcion, horas y soportes.</p>${activitiesTable(activities, true)}</article></section>`;
+  return `
+    <section class="stack">
+      <article class="card full shadow-sm">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="mb-0">Actividades Pendientes de Validación</h2>
+            <p class="muted small mb-0">Revisa la descripción, horas reportadas y soportes documentales de tus estudiantes.</p>
+          </div>
+          ${activities.length ? `
+            <div class="table-search-bar">
+              <span class="text-muted">🔍</span>
+              <input type="text" placeholder="Filtrar por estudiante o actividad..." data-table-filter="#teacher-validations-table">
+            </div>
+          ` : ""}
+        </div>
+        ${activitiesTable(activities, true, "teacher-validations-table")}
+      </article>
+    </section>`;
 }
 
 function renderTeacherVisits(user) {
@@ -1979,9 +2011,14 @@ function renderAudit() {
             <h2 class="mb-0">Pista de Auditoría y Trazabilidad del Sistema</h2>
             <p class="muted small mb-0">Registro cronológico inmutable de todas las acciones operativas en SIGPRA.</p>
           </div>
-          <div class="table-search-bar">
-            <span class="text-muted">🔍</span>
-            <input type="text" placeholder="Buscar por usuario, evento o fecha..." data-table-filter="#audit-table">
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center gap-1 shadow-sm" data-action="export-audit-csv" title="Descargar registros de auditoría filtrados">
+              📥 Exportar CSV
+            </button>
+            <div class="table-search-bar">
+              <span class="text-muted">🔍</span>
+              <input type="text" placeholder="Buscar por usuario, evento o fecha..." data-table-filter="#audit-table">
+            </div>
           </div>
         </div>
 
@@ -2057,20 +2094,25 @@ function openModal(type, id = null) {
   modal.querySelectorAll("form[data-guided-workflow]").forEach(updateGuidedWorkflow);
 }
 
+function closeModal() {
+  document.querySelector(".sigpra-modal-backdrop")?.remove();
+  document.body.classList.remove("has-official-letter");
+}
+
 function modalContent(type, id) {
   const title = {
-    period: "Nuevo periodo",
-    institution: "Nueva institucion",
+    period: id ? "Editar periodo de práctica" : "Nuevo periodo",
+    institution: id ? "Editar institución receptora" : "Nueva institución",
     agreement: "Nuevo convenio",
     "agreement-place": "Registrar convenio y plazas",
-    place: "Nueva plaza",
-    assignment: "Nueva asignacion",
-    activity: "Nueva actividad",
+    place: id ? "Editar plaza de práctica" : "Nueva plaza de práctica",
+    assignment: "Nueva asignación",
+    activity: id ? "Completar / Corregir bitácora" : "Nueva actividad",
     evidence: "Registrar evidencia",
-    validate: "Validar actividad",
-    visit: "Registrar visita",
+    validate: "Validar reporte de actividad",
+    visit: "Registrar visita de acompañamiento",
     "student-dossier": "Expediente del Practicante"
-  }[type];
+  }[type] || "Formulario";
   return `
     <div class="sigpra-modal-header">
       <h2>${escapeHtml(title)}</h2>
@@ -2430,23 +2472,31 @@ function modalForm(type, id) {
     const assignment = data.assignments.find((item) => item.studentId === user.id && item.status === "ACTIVA");
     const activities = assignment ? data.activities.filter((item) => item.assignmentId === assignment.id) : [];
     return `
-      <form class="form-grid guided-workflow" data-guided-workflow data-submit="evidence">
-        <article class="card full workflow-step" data-workflow-step>
-          <h3><span class="step-number">1</span> Seleccionar actividad</h3>
+      <form class="form-grid" data-submit="evidence">
+        <article class="card full">
+          <h3 class="mb-3"><span class="step-number">1</span> Seleccionar actividad</h3>
           ${activities.length ? `
-            <label class="full-field">Actividad
+            <label class="full-field">Actividad reportada *
               <select class="form-select" name="activityId" required>
                 <option value="">-- Seleccione una actividad --</option>
-                ${optionList(activities, (item) => `${item.date} - ${item.type}`)}
+                ${optionList(activities, (item) => `${moneyDate(item.date)} - ${item.type} (${item.hours} hrs) [${item.status}]`)}
               </select>
             </label>
-          ` : `<div class="empty">No hay actividades asociadas a tu asignacion activa.</div>`}
+          ` : `<div class="empty">No hay actividades asociadas a tu asignación activa. Registra primero una bitácora.</div>`}
         </article>
-        <article class="card full workflow-step" data-workflow-step hidden>
-          <h3><span class="step-number">2</span> Adjuntar soporte</h3>
-          <label class="full-field">Soporte o evidencia<input class="form-control" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required></label>
-          <div class="alert alert-warning notice warning full-field">En esta version se guarda el nombre y la referencia del archivo en el navegador, no el contenido binario.</div>
-          <button class="btn btn-primary button primary full-field" type="submit">Registrar evidencia</button>
+        <article class="card full mt-3">
+          <h3 class="mb-3"><span class="step-number">2</span> Adjuntar archivo de soporte</h3>
+          <label class="full-field">Soporte o evidencia documental *
+            <input class="form-control" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
+          </label>
+          <div class="alert alert-info py-2 px-3 small full-field mt-2">
+            ℹ️ Formatos permitidos: PDF, JPG, PNG, DOC y DOCX (hasta 10 MB). Se almacena el registro formal de la evidencia.
+          </div>
+          <div class="d-flex justify-content-end mt-3 border-top pt-2">
+            <button class="btn btn-primary fw-bold px-4 shadow-sm" type="submit" ${activities.length ? "" : "disabled"}>
+              📤 Registrar soporte
+            </button>
+          </div>
         </article>
       </form>`;
   }
@@ -2454,24 +2504,60 @@ function modalForm(type, id) {
     const activity = data.activities.find((item) => item.id === Number(id));
     const assignment = activity && data.assignments.find((item) => item.id === activity.assignmentId);
     const evidence = data.evidences.filter((item) => item.activityId === activity?.id);
+    const student = assignment && assignmentDetails(assignment).student;
     return `
-      <form class="form-grid guided-workflow" data-guided-workflow data-submit="validate" data-id="${id}">
-        <article class="card full workflow-step" data-workflow-step>
-          <h3><span class="step-number">1</span> Revisar actividad y soportes</h3>
-          <div>
-            <p><strong>${escapeHtml(activity?.type)}</strong><br>${escapeHtml(activity?.description)}</p>
-            <p class="muted">Estudiante: ${escapeHtml(assignment && assignmentDetails(assignment).student?.name)} · Fecha: ${moneyDate(activity?.date)} · Horas: ${activity?.hours}</p>
-            <h4>Soportes adjuntos</h4>
-            ${evidence.length ? `<ul>${evidence.map((item) => `<li>${escapeHtml(item.fileName)} (${escapeHtml(item.type)})</li>`).join("")}</ul>` : `<div class="empty">No se adjuntaron soportes.</div>`}
+      <form class="form-grid" data-submit="validate" data-id="${id}">
+        <article class="card full bg-light border">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <div>
+              <span class="badge bg-primary mb-1">${escapeHtml(activity?.type || 'Actividad')}</span>
+              <h4 class="mb-1 text-primary fw-bold">${escapeHtml(student?.name || 'Estudiante')}</h4>
+              <small class="text-muted">Código: ${escapeHtml(student?.code || 'N/A')} &bull; Fecha: ${moneyDate(activity?.date)}</small>
+            </div>
+            <div class="text-end">
+              <span class="fs-4 fw-bold text-success">${activity?.hours} hrs</span><br>
+              <small class="text-muted">Reportadas</small>
+            </div>
           </div>
-          <label class="full-field"><span><input class="form-check-input" name="evidenceReviewed" type="checkbox" value="yes" required style="width:auto"> Confirmo que revise los soportes disponibles para esta actividad</span></label>
+          <div class="p-3 bg-white rounded border mb-3">
+            <strong class="d-block text-secondary small fw-bold mb-1">DESCRIPCIÓN DE LA JORNADA:</strong>
+            <p class="mb-0" style="white-space: pre-line;">${escapeHtml(activity?.description || 'Sin descripción.')}</p>
+          </div>
+          <strong class="d-block text-secondary small fw-bold mb-1">SOPORTES O EVIDENCIAS ADJUNTAS:</strong>
+          ${evidence.length ? `
+            <ul class="list-group list-group-flush border rounded bg-white mb-2">
+              ${evidence.map((item) => `
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                  <span class="d-flex align-items-center gap-2">📄 <strong>${escapeHtml(item.fileName)}</strong></span>
+                  <span class="badge bg-secondary">${escapeHtml(item.type || 'DOCUMENTO')}</span>
+                </li>
+              `).join("")}
+            </ul>
+          ` : `<div class="alert alert-warning py-2 small mb-2">⚠️ El estudiante no adjuntó archivos de soporte en este registro.</div>`}
+          
+          <label class="form-check-label small d-flex align-items-center gap-2 mt-2">
+            <input class="form-check-input" name="evidenceReviewed" type="checkbox" value="yes" checked style="width: auto;">
+            Confirmo que revisé la actividad, horas y los soportes presentados por el practicante.
+          </label>
         </article>
-        <article class="card full workflow-step" data-workflow-step hidden>
-          <h3><span class="step-number">2</span> Registrar decision y justificacion</h3>
-          <label>Resultado<select class="form-select" name="status"><option value="APROBADA">Aprobar</option><option value="DEVUELTA">Devolver</option><option value="RECHAZADA">Rechazar</option></select></label>
-          <label>Observacion / justificacion<textarea class="form-control" name="observation" placeholder="Obligatoria al devolver o rechazar"></textarea></label>
-          <div class="alert alert-warning notice warning full-field">Al devolver o rechazar, registra la justificacion para el estudiante.</div>
-          <button class="btn btn-primary button primary full-field" type="submit">Guardar validacion</button>
+
+        <article class="card full mt-3">
+          <h3 class="mb-3"><span class="step-number">2</span> Decisión y Retroalimentación Pedagógica</h3>
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Observaciones / Justificación para el estudiante:</label>
+            <textarea class="form-control" name="observation" rows="3" placeholder="Escribe tus observaciones pedagógicas. (Obligatoria si devuelves o rechazas el reporte)">${escapeHtml(activity?.observation || "")}</textarea>
+          </div>
+          <div class="d-flex justify-content-end gap-2 flex-wrap pt-2 border-top">
+            <button class="btn btn-outline-warning text-dark fw-bold px-3 shadow-sm" type="submit" name="status" value="DEVUELTA">
+              ⚠️ Devolver para Corrección
+            </button>
+            <button class="btn btn-outline-danger fw-bold px-3 shadow-sm" type="submit" name="status" value="RECHAZADA">
+              ❌ Rechazar Actividad
+            </button>
+            <button class="btn btn-success fw-bold px-4 shadow-sm" type="submit" name="status" value="APROBADA">
+              ✅ Aprobar Actividad (${activity?.hours} hrs)
+            </button>
+          </div>
         </article>
       </form>`;
   }
@@ -2930,25 +3016,26 @@ function handleSubmit(form, submitter) {
     const activity = data.activities.find((item) => item.id === Number(form.dataset.id));
     const assignment = activity && data.assignments.find((item) => item.id === activity.assignmentId);
     const evidence = data.evidences.filter((item) => item.activityId === activity?.id);
+    const status = submitter?.value || formData.status || "APROBADA";
     if (!activity || !assignment || assignment.teacherId !== user.id || activity.status !== "PENDIENTE") {
-      toast("La actividad ya no esta pendiente o no pertenece a tus estudiantes asignados.");
+      toast("La actividad ya no está pendiente o no pertenece a tus estudiantes asignados.");
       return;
     }
-    if (formData.status === "APROBADA" && (!formData.evidenceReviewed || evidence.length === 0)) {
-      toast("Para aprobar, confirma la revision y verifica que la actividad tenga al menos un soporte.");
+    if (status === "APROBADA" && (!formData.evidenceReviewed || evidence.length === 0)) {
+      toast("Para aprobar, confirma la revisión y verifica que la actividad tenga al menos un soporte adjunto.");
       return;
     }
-    if (["DEVUELTA", "RECHAZADA"].includes(String(formData.status)) && !String(formData.observation).trim()) {
-      toast("Escribe la observacion obligatoria al devolver o rechazar una actividad.");
+    if (["DEVUELTA", "RECHAZADA"].includes(status) && !String(formData.observation || "").trim()) {
+      toast("Escribe la observación u justificación pedagógica obligatoria al devolver o rechazar una actividad.");
       return;
     }
-    activity.status = formData.status;
-    activity.observation = String(formData.observation || (formData.status === "APROBADA" ? "Actividad aprobada." : "")).trim();
+    activity.status = status;
+    activity.observation = String(formData.observation || (status === "APROBADA" ? "Actividad aprobada satisfactoriamente." : "")).trim();
     activity.validatedBy = user.id;
     activity.validatedAt = new Date().toISOString();
-    evidence.forEach((item) => { item.status = formData.status === "APROBADA" ? "VALIDADA" : item.status; });
+    evidence.forEach((item) => { item.status = status === "APROBADA" ? "VALIDADA" : item.status; });
     assignment.approvedHours = approvedHours(assignment.id);
-    audit(`Valido actividad como ${formData.status}`, "REGISTRO_ACTIVIDAD");
+    audit(`Validó actividad #${activity.id} como ${status}`, "REGISTRO_ACTIVIDAD");
   }
   if (type === "visit") {
     const assignment = data.assignments.find((item) => item.id === Number(formData.assignmentId) &&
@@ -3058,6 +3145,17 @@ function exportCsv() {
   downloadFile("sigpra-consolidado-udi.csv", csvContent, "text/csv;charset=utf-8;");
   audit(`Exporto consolidado CSV (${JSON.stringify(reportFilters)})`, "REPORTE");
   saveData();
+}
+
+function exportAuditCsv() {
+  const header = ["FECHA Y HORA", "USUARIO RESPONSABLE", "EVENTO / ACCION", "ENTIDAD"];
+  const list = auditEntityFilter === "ALL" ? (data.audit || []) : (data.audit || []).filter(a => a.entity === auditEntityFilter);
+  const rows = list.map(item => [item.date, item.user, item.event, item.entity]);
+  const csvContent = "\ufeff" + [header, ...rows].map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(";")).join("\r\n");
+  downloadFile("sigpra-auditoria-udi.csv", csvContent, "text/csv;charset=utf-8;");
+  audit(`Exportó auditoría CSV (${list.length} registros)`, "REPORTE");
+  saveData();
+  toast("Auditoría exportada exitosamente en formato CSV.", "success");
 }
 
 function downloadFile(name, content, type) {
@@ -3608,6 +3706,7 @@ document.addEventListener("click", async (event) => {
   }
   if (action.dataset.action === "export-json") exportJson();
   if (action.dataset.action === "export-csv") exportCsv();
+  if (action.dataset.action === "export-audit-csv") exportAuditCsv();
   if (action.dataset.action === "export-print") {
     audit(`Preparo impresion PDF del consolidado (${JSON.stringify(reportFilters)})`, "REPORTE");
     saveData();
