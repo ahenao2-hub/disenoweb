@@ -235,6 +235,8 @@ let reportFilters = { periodId: "", program: "", institutionId: "", teacherId: "
 let directorFilter = "ALL";
 let studentRequestTab = "status";
 let directorStatusFilter = "ALL";
+let placeStatusFilter = "ALL";
+let auditEntityFilter = "ALL";
 let notificationsOpen = false;
 const readNotifIds = new Set();
 let authMode = "login";
@@ -1218,26 +1220,67 @@ function renderAgreements() {
           </table>
         </div>
       </article>
-      <article class="card full">
-        <h2>Plazas disponibles</h2>
+      <article class="card full shadow-sm mt-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="mb-0">Plazas de Práctica Disponibles</h2>
+            <p class="muted small mb-0">Cupos formativos ofertados por convenios interinstitucionales.</p>
+          </div>
+          <div class="table-search-bar">
+            <span class="text-muted">🔍</span>
+            <input type="text" placeholder="Filtrar plazas por institución, jornada o docente..." data-table-filter="#places-table">
+          </div>
+        </div>
+
+        <!-- Chips de Filtro para Plazas -->
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+          <span class="small text-muted fw-bold">Filtrar estado:</span>
+          <button class="btn btn-sm ${placeStatusFilter === 'ALL' ? 'btn-primary active text-white' : 'btn-outline-primary'} py-1 px-2" data-place-filter="ALL" style="font-size: 0.8rem;">Todas (${data.places.length})</button>
+          <button class="btn btn-sm ${placeStatusFilter === 'DISPONIBLE' ? 'btn-success active text-white fw-bold' : 'btn-outline-success'} py-1 px-2" data-place-filter="DISPONIBLE" style="font-size: 0.8rem;">✅ Disponibles (${data.places.filter(p => { const ag = data.agreements.find(a => a.id === p.agreementId); return placeStatus(p, ag) === 'DISPONIBLE'; }).length})</button>
+          <button class="btn btn-sm ${placeStatusFilter === 'INACTIVA' ? 'btn-danger active text-white fw-bold' : 'btn-outline-danger'} py-1 px-2" data-place-filter="INACTIVA" style="font-size: 0.8rem;">❌ Inactivas / Sin cupo (${data.places.filter(p => { const ag = data.agreements.find(a => a.id === p.agreementId); return placeStatus(p, ag) !== 'DISPONIBLE'; }).length})</button>
+        </div>
+
         <div class="table-wrap table-responsive">
-          <table class="table table-hover align-middle">
-            <thead><tr><th>Institucion</th><th>Nivel</th><th>Jornada</th><th>Cupos</th><th>Docente titular</th><th>Estado</th></tr></thead>
+          <table class="table table-hover align-middle" id="places-table">
+            <thead class="table-light">
+              <tr>
+                <th>INSTITUCIÓN</th>
+                <th>NIVEL</th>
+                <th>JORNADA</th>
+                <th>CUPOS</th>
+                <th>DOCENTE TITULAR</th>
+                <th>ESTADO</th>
+                <th class="text-end">ACCIONES</th>
+              </tr>
+            </thead>
             <tbody>
-              ${data.places.map((place) => {
+              ${data.places.filter(place => {
+                const agreement = data.agreements.find((item) => item.id === place.agreementId);
+                const status = placeStatus(place, agreement);
+                if (placeStatusFilter === 'ALL') return true;
+                if (placeStatusFilter === 'DISPONIBLE') return status === 'DISPONIBLE';
+                if (placeStatusFilter === 'INACTIVA') return status !== 'DISPONIBLE';
+                return true;
+              }).map((place) => {
                 const agreement = data.agreements.find((item) => item.id === place.agreementId);
                 const institution = data.institutions.find((item) => item.id === agreement?.institutionId);
                 return `
                   <tr>
-                    <td>${escapeHtml(institution?.name)}</td>
+                    <td><strong>${escapeHtml(institution?.name || 'Institución')}</strong></td>
                     <td>${escapeHtml(place.level)}</td>
-                    <td>${escapeHtml(place.shift)}</td>
-                    <td>${place.occupied} / ${place.offered}</td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(place.shift)}</span></td>
+                    <td><strong>${place.occupied} / ${place.offered}</strong></td>
                     <td>${escapeHtml(place.tutor)}</td>
                     <td>${statusTag(placeStatus(place, agreement))}</td>
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.78rem;" data-action="edit-place" data-id="${place.id}" title="Editar plaza">✏️ Editar</button>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 0.78rem;" data-action="delete-place" data-id="${place.id}" title="Eliminar plaza">🗑️ Borrar</button>
+                      </div>
+                    </td>
                   </tr>
                 `;
-              }).join("") || `<tr><td colspan="6">No hay plazas registradas.</td></tr>`}
+              }).join("") || `<tr><td colspan="7" class="text-center text-muted py-3">No hay plazas que coincidan con el filtro seleccionado.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -1871,14 +1914,133 @@ function filteredReportAssignments() {
 }
 
 function renderAudit() {
+  const auditList = data.audit || [];
+  const todayStr = new Date().toLocaleDateString('es-CO');
+  const todayCount = auditList.filter(item => String(item.date).includes(todayStr)).length;
+  const uniqueUsers = new Set(auditList.map(item => item.user)).size;
+
+  const filteredAudit = auditEntityFilter === "ALL"
+    ? auditList
+    : auditList.filter(item => item.entity === auditEntityFilter);
+
+  const getEntityBadge = (entity) => {
+    const config = {
+      USUARIO: { label: "USUARIO", icon: "👤", badgeClass: "bg-primary-subtle text-primary border border-primary-subtle" },
+      ASIGNACION: { label: "ASIGNACIÓN", icon: "📝", badgeClass: "bg-success-subtle text-success border border-success-subtle" },
+      PERIODO: { label: "PERIODO", icon: "🎓", badgeClass: "bg-info-subtle text-info border border-info-subtle" },
+      CONVENIO_PLAZA: { label: "PLAZA", icon: "🏢", badgeClass: "bg-warning-subtle text-dark border border-warning-subtle" },
+      PLAZA_PRACTICA: { label: "PLAZA", icon: "🏢", badgeClass: "bg-warning-subtle text-dark border border-warning-subtle" },
+      INSTITUCION: { label: "INSTITUCIÓN", icon: "🏛️", badgeClass: "bg-warning-subtle text-dark border border-warning-subtle" },
+      PROGRAMA_ACADEMICO: { label: "PROGRAMA", icon: "📚", badgeClass: "bg-secondary-subtle text-secondary border border-secondary-subtle" },
+      SOLICITUD: { label: "SOLICITUD", icon: "📋", badgeClass: "bg-primary-subtle text-primary border border-primary-subtle" },
+      NOTIFICACION: { label: "NOTIFICACIÓN", icon: "🔔", badgeClass: "bg-light text-dark border" }
+    }[entity] || { label: entity, icon: "⚡", badgeClass: "bg-light text-dark border" };
+
+    return `<span class="badge ${config.badgeClass} d-inline-flex align-items-center gap-1 px-2 py-1"><span class="fs-6">${config.icon}</span><strong>${config.label}</strong></span>`;
+  };
+
   return `
-    <section class="grid">
-      <article class="card full">
+    <section class="stack">
+      <!-- Tarjetas de Estadísticas de Auditoría -->
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="card p-3 border-start border-4 border-primary shadow-sm bg-white">
+            <span class="text-muted small text-uppercase fw-bold">Total Registros Auditados</span>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <h2 class="mb-0 text-primary">${auditList.length}</h2>
+              <span class="fs-3">📜</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 border-start border-4 border-success shadow-sm bg-white">
+            <span class="text-muted small text-uppercase fw-bold">Eventos del Día</span>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <h2 class="mb-0 text-success">${todayCount}</h2>
+              <span class="fs-3">⚡</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 border-start border-4 border-info shadow-sm bg-white">
+            <span class="text-muted small text-uppercase fw-bold">Usuarios con Registro</span>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <h2 class="mb-0 text-info">${uniqueUsers}</h2>
+              <span class="fs-3">👥</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla Principal con Filtros y Buscador -->
+      <article class="card full shadow-sm mt-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="mb-0">Pista de Auditoría y Trazabilidad del Sistema</h2>
+            <p class="muted small mb-0">Registro cronológico inmutable de todas las acciones operativas en SIGPRA.</p>
+          </div>
+          <div class="table-search-bar">
+            <span class="text-muted">🔍</span>
+            <input type="text" placeholder="Buscar por usuario, evento o fecha..." data-table-filter="#audit-table">
+          </div>
+        </div>
+
+        <!-- Chips de Filtro por Entidad -->
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+          <span class="small text-muted fw-bold">Filtrar por Entidad:</span>
+          <button class="btn btn-sm ${auditEntityFilter === 'ALL' ? 'btn-primary active text-white' : 'btn-outline-primary'} py-1 px-2" data-audit-filter="ALL" style="font-size: 0.8rem;">Todas (${auditList.length})</button>
+          <button class="btn btn-sm ${auditEntityFilter === 'USUARIO' ? 'btn-dark active text-white' : 'btn-outline-secondary'} py-1 px-2" data-audit-filter="USUARIO" style="font-size: 0.8rem;">👤 Usuarios</button>
+          <button class="btn btn-sm ${auditEntityFilter === 'ASIGNACION' ? 'btn-success active text-white' : 'btn-outline-success'} py-1 px-2" data-audit-filter="ASIGNACION" style="font-size: 0.8rem;">📝 Asignaciones</button>
+          <button class="btn btn-sm ${auditEntityFilter === 'PERIODO' ? 'btn-primary active text-white' : 'btn-outline-primary'} py-1 px-2" data-audit-filter="PERIODO" style="font-size: 0.8rem;">🎓 Periodos</button>
+          <button class="btn btn-sm ${auditEntityFilter === 'CONVENIO_PLAZA' ? 'btn-warning active text-dark' : 'btn-outline-warning'} py-1 px-2" data-audit-filter="CONVENIO_PLAZA" style="font-size: 0.8rem;">🏢 Plazas</button>
+          <button class="btn btn-sm ${auditEntityFilter === 'INSTITUCION' ? 'btn-warning active text-dark' : 'btn-outline-warning'} py-1 px-2" data-audit-filter="INSTITUCION" style="font-size: 0.8rem;">🏛️ Instituciones</button>
+          <button class="btn btn-sm ${auditEntityFilter === 'PROGRAMA_ACADEMICO' ? 'btn-info active text-white' : 'btn-outline-info'} py-1 px-2" data-audit-filter="PROGRAMA_ACADEMICO" style="font-size: 0.8rem;">📚 Programas</button>
+        </div>
+
         <div class="table-wrap table-responsive">
-          <table class="table table-hover align-middle">
-            <thead><tr><th>Fecha</th><th>Usuario</th><th>Evento</th><th>Entidad</th></tr></thead>
+          <table class="table table-hover align-middle" id="audit-table">
+            <thead class="table-light">
+              <tr>
+                <th>FECHA / HORA</th>
+                <th>USUARIO RESPONSABLE</th>
+                <th>EVENTO / ACCIÓN REALIZADA</th>
+                <th>ENTIDAD</th>
+              </tr>
+            </thead>
             <tbody>
-              ${data.audit.map((item) => `<tr><td>${escapeHtml(item.date)}</td><td>${escapeHtml(item.user)}</td><td>${escapeHtml(item.event)}</td><td>${escapeHtml(item.entity)}</td></tr>`).join("")}
+              ${filteredAudit.map(item => {
+                const userObj = data.users.find(u => u.name === item.user || u.email === item.user);
+                const initials = userObj?.initials || item.user.slice(0, 2).toUpperCase();
+                return `
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted fs-6">🕒</span>
+                        <strong>${escapeHtml(item.date)}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="avatar avatar-sm fs-7" style="width: 28px; height: 28px; font-size: 0.75rem;">${escapeHtml(initials)}</span>
+                        <div>
+                          <strong>${escapeHtml(item.user)}</strong>
+                          ${userObj?.role ? `<div class="text-muted" style="font-size: 0.7rem;">${escapeHtml(roleLabel(userObj.role))}</div>` : ''}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-medium text-dark">${escapeHtml(item.event)}</div>
+                    </td>
+                    <td>
+                      ${getEntityBadge(item.entity)}
+                    </td>
+                  </tr>
+                `;
+              }).join('') || `
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-4">No se encontraron eventos para el filtro seleccionado.</td>
+                </tr>
+              `}
             </tbody>
           </table>
         </div>
@@ -2097,14 +2259,25 @@ function modalForm(type, id) {
       </form>`;
   }
   if (type === "institution") {
+    const inst = id ? data.institutions.find((item) => item.id === Number(id)) : null;
     return `
-      <form class="form-grid" data-submit="institution">
-        <label>Nombre<input class="form-control" name="name" required></label>
-        <label>NIT<input class="form-control" name="nit" required></label>
-        <label>Contacto<input class="form-control" name="contact" required></label>
-        <label>Telefono<input class="form-control" name="phone" required></label>
-        <label class="full-field">Correo<input class="form-control" name="email" type="email" required></label>
-        <button class="btn btn-primary button primary full-field" type="submit">Guardar institucion</button>
+      <form class="form-grid" data-submit="institution" data-id="${inst?.id || ""}">
+        <label>Nombre de la Institución / Empresa *
+          <input class="form-control text-uppercase" name="name" value="${escapeHtml(inst?.name || '')}" placeholder="EJ: COLEGIO COOPERATIVO DE BUCARAMANGA" required minlength="3" style="text-transform: uppercase;">
+        </label>
+        <label>NIT / Identificación Tributaria *
+          <input class="form-control" name="nit" value="${escapeHtml(inst?.nit || '')}" placeholder="EJ: 900123456-1 o 890201213" required pattern="^[0-9]{8,10}(-[0-9kK])?$" title="El NIT debe tener entre 8 y 10 dígitos numéricos (con guion y dígito de verificación opcional)">
+        </label>
+        <label>Persona o Director de Contacto *
+          <input class="form-control text-uppercase" name="contact" value="${escapeHtml(inst?.contact || '')}" placeholder="EJ: DRA. MARÍA ELENA SUÁREZ" required minlength="3" style="text-transform: uppercase;">
+        </label>
+        <label>Teléfono de Contacto (Fijo o Móvil) *
+          <input class="form-control" name="phone" type="tel" value="${escapeHtml(inst?.phone || '')}" placeholder="EJ: 6076543210 o 3151234567" required pattern="^[0-9]{7,10}$" title="El teléfono debe tener entre 7 dígitos (fijo) o 10 dígitos (celular)">
+        </label>
+        <label class="full-field">Correo Electrónico Institucional *
+          <input class="form-control" name="email" type="email" value="${escapeHtml(inst?.email || '')}" placeholder="contacto@institucion.edu.co" required>
+        </label>
+        <button class="btn btn-primary button primary full-field fw-bold" type="submit">${inst ? 'Guardar Cambios de Institución' : 'Guardar Institución'}</button>
       </form>`;
   }
   if (type === "agreement") {
@@ -2151,14 +2324,35 @@ function modalForm(type, id) {
       </form>`;
   }
   if (type === "place") {
+    const place = id ? data.places.find((item) => item.id === Number(id)) : null;
     return `
-      <form class="form-grid" data-submit="place">
-        <label>Convenio<select class="form-select" name="agreementId">${optionList(data.agreements, (item) => item.number)}</select></label>
-        <label>Nivel<input class="form-control" name="level" required></label>
-        <label>Jornada<select class="form-select" name="shift"><option>MANANA</option><option>TARDE</option><option>NOCHE</option><option>MIXTA</option></select></label>
-        <label>Cupos<input class="form-control" name="offered" type="number" min="1" value="5" required></label>
-        <label class="full-field">Docente titular<input class="form-control" name="tutor" required></label>
-        <button class="btn btn-primary button primary full-field" type="submit">Guardar plaza</button>
+      <form class="form-grid" data-submit="place" data-id="${place?.id || ""}">
+        <label>Convenio Institucional Asociado *
+          <select class="form-select" name="agreementId" required>
+            ${data.agreements.map((item) => {
+              const inst = data.institutions.find(i => i.id === item.institutionId);
+              return `<option value="${item.id}" ${place?.agreementId === item.id ? "selected" : ""}>${escapeHtml(inst?.name || 'Institución')} (${escapeHtml(item.number)})</option>`;
+            }).join("")}
+          </select>
+        </label>
+        <label>Nivel de Práctica *
+          <input class="form-control text-uppercase" name="level" value="${escapeHtml(place?.level || '')}" placeholder="EJ: PRACTICA PEDAGOGICA VIII" required minlength="3" style="text-transform: uppercase;">
+        </label>
+        <label>Jornada *
+          <select class="form-select" name="shift">
+            <option ${place?.shift === 'MANANA' ? 'selected' : ''}>MANANA</option>
+            <option ${place?.shift === 'TARDE' ? 'selected' : ''}>TARDE</option>
+            <option ${place?.shift === 'NOCHE' ? 'selected' : ''}>NOCHE</option>
+            <option ${place?.shift === 'MIXTA' ? 'selected' : ''}>MIXTA</option>
+          </select>
+        </label>
+        <label>Cupos Ofrecidos *
+          <input class="form-control" name="offered" type="number" min="1" max="100" value="${place?.offered || 5}" required>
+        </label>
+        <label class="full-field">Docente Titular / Coordinador en la Entidad *
+          <input class="form-control text-uppercase" name="tutor" value="${escapeHtml(place?.tutor || '')}" placeholder="EJ: LIC. SANDRA PÉREZ" required minlength="3" style="text-transform: uppercase;">
+        </label>
+        <button class="btn btn-primary button primary full-field fw-bold" type="submit">${place ? 'Guardar Cambios de la Plaza' : 'Guardar Plaza'}</button>
       </form>`;
   }
   if (type === "assignment") {
@@ -2401,8 +2595,73 @@ function handleSubmit(form, submitter) {
     audit(existingPeriod ? `${periodStatus === "PUBLICADO" ? "Publico" : "Actualizo"} un periodo en borrador` : "Creo un periodo de practica", "PERIODO_PRACTICA");
   }
   if (type === "institution") {
-    data.institutions.push({ id: nextId(data.institutions), ...formData, active: true });
-    audit("Registro una institucion", "INSTITUCION");
+    const instId = form.dataset.id ? Number(form.dataset.id) : null;
+    const existing = instId ? data.institutions.find(i => i.id === instId) : null;
+
+    const name = String(formData.name || "").trim().toUpperCase();
+    const rawNit = String(formData.nit || "").trim();
+    const contact = String(formData.contact || "").trim().toUpperCase();
+    const phone = String(formData.phone || "").trim().replace(/\D/g, "");
+    const email = String(formData.email || "").trim().toLowerCase();
+
+    // Validations:
+    if (!name || name.length < 3) {
+      toast("El nombre de la institución debe tener al menos 3 caracteres.", "warning");
+      return;
+    }
+
+    const cleanNit = rawNit.replace(/\D/g, "");
+    if (cleanNit.length < 8 || cleanNit.length > 10) {
+      toast("El NIT debe contener entre 8 y 10 dígitos numéricos válidos.", "warning");
+      return;
+    }
+
+    if (phone.length < 7 || phone.length > 10) {
+      toast("El teléfono debe tener entre 7 dígitos (fijo) o 10 dígitos (celular).", "warning");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast("Por favor ingresa un correo electrónico institucional válido.", "warning");
+      return;
+    }
+
+    // Duplicate checks
+    const duplicateNit = data.institutions.find(i => i.id !== instId && i.nit.replace(/\D/g, "") === cleanNit);
+    if (duplicateNit) {
+      toast(`Ya existe una institución registrada con el NIT ${rawNit} (${duplicateNit.name}).`, "warning");
+      return;
+    }
+
+    const duplicateName = data.institutions.find(i => i.id !== instId && i.name.toUpperCase() === name);
+    if (duplicateName) {
+      toast("Ya existe una institución registrada con ese mismo nombre.", "warning");
+      return;
+    }
+
+    if (existing) {
+      Object.assign(existing, { name, nit: rawNit, contact, phone, email });
+      audit(`Actualizó institución: ${name} (NIT: ${rawNit})`, "INSTITUCION");
+      toast("Institución actualizada correctamente.", "success");
+    } else {
+      const newInst = {
+        id: nextId(data.institutions),
+        name,
+        nit: rawNit,
+        contact,
+        phone,
+        email,
+        active: true
+      };
+      data.institutions.push(newInst);
+      audit(`Registró una institución: ${name} (NIT: ${rawNit})`, "INSTITUCION");
+      toast("Institución registrada exitosamente.", "success");
+    }
+    saveData();
+    closeModal();
+    render();
+    return;
   }
   if (type === "agreement") {
     if (formData.start > formData.end) {
@@ -2456,8 +2715,55 @@ function handleSubmit(form, submitter) {
     audit("Registro un convenio y sus plazas", "CONVENIO_PLAZA");
   }
   if (type === "place") {
-    data.places.push({ id: nextId(data.places), agreementId: Number(formData.agreementId), level: formData.level, shift: formData.shift, offered: Number(formData.offered), occupied: 0, tutor: formData.tutor, status: "DISPONIBLE" });
-    audit("Registro una plaza de practica", "PLAZA_PRACTICA");
+    const placeId = form.dataset.id ? Number(form.dataset.id) : null;
+    const existing = placeId ? data.places.find(p => p.id === placeId) : null;
+
+    const agreementId = Number(formData.agreementId);
+    const level = String(formData.level || "").trim().toUpperCase();
+    const shift = String(formData.shift || "MANANA");
+    const offered = Number(formData.offered);
+    const tutor = String(formData.tutor || "").trim().toUpperCase();
+
+    if (!level || level.length < 3) {
+      toast("El nivel de práctica debe tener al menos 3 caracteres.", "warning");
+      return;
+    }
+    if (!tutor || tutor.length < 3) {
+      toast("El nombre del docente titular debe tener al menos 3 caracteres.", "warning");
+      return;
+    }
+    if (isNaN(offered) || offered <= 0) {
+      toast("Los cupos deben ser un número positivo mayor a 0.", "warning");
+      return;
+    }
+
+    if (existing) {
+      if (offered < existing.occupied) {
+        toast(`No puedes reducir los cupos a menos de los cupos ya ocupados (${existing.occupied}).`, "warning");
+        return;
+      }
+      Object.assign(existing, { agreementId, level, shift, offered, tutor });
+      audit(`Actualizó plaza ID #${existing.id} (${existing.level} - ${existing.shift})`, "CONVENIO_PLAZA");
+      toast("Plaza de práctica actualizada exitosamente.", "success");
+    } else {
+      const newPlace = {
+        id: nextId(data.places),
+        agreementId,
+        level,
+        shift,
+        offered,
+        occupied: 0,
+        tutor,
+        status: "DISPONIBLE"
+      };
+      data.places.push(newPlace);
+      audit(`Registró nueva plaza de práctica (${newPlace.level} - ${newPlace.shift})`, "CONVENIO_PLAZA");
+      toast("Plaza de práctica registrada exitosamente.", "success");
+    }
+    saveData();
+    closeModal();
+    render();
+    return;
   }
   if (type === "assignment") {
     const studentId = Number(formData.studentId);
@@ -2870,6 +3176,62 @@ document.addEventListener("change", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  // Filtro de auditoría por entidad
+  const auditFilterBtn = event.target.closest('[data-audit-filter]');
+  if (auditFilterBtn) {
+    event.stopPropagation();
+    const filter = auditFilterBtn.getAttribute('data-audit-filter');
+    if (filter) {
+      auditEntityFilter = filter;
+      render();
+    }
+    return;
+  }
+
+  // Filtro de plazas por estado
+  const placeFilterBtn = event.target.closest('[data-place-filter]');
+  if (placeFilterBtn) {
+    event.stopPropagation();
+    const filter = placeFilterBtn.getAttribute('data-place-filter');
+    if (filter) {
+      placeStatusFilter = filter;
+      render();
+    }
+    return;
+  }
+
+  // Editar plaza
+  const editPlaceBtn = event.target.closest('[data-action="edit-place"]');
+  if (editPlaceBtn) {
+    event.stopPropagation();
+    const placeId = editPlaceBtn.getAttribute('data-id');
+    openModal('place', placeId);
+    return;
+  }
+
+  // Eliminar plaza
+  const deletePlaceBtn = event.target.closest('[data-action="delete-place"]');
+  if (deletePlaceBtn) {
+    event.stopPropagation();
+    const placeId = Number(deletePlaceBtn.getAttribute('data-id'));
+    const hasAssignments = (data.assignments || []).some(a => a.placeId === placeId);
+    const hasRequests = (data.requests || []).some(r => r.placeId === placeId);
+
+    if (hasAssignments || hasRequests) {
+      toast("No se puede eliminar esta plaza porque ya tiene estudiantes asignados o solicitudes vinculadas.", "warning");
+      return;
+    }
+
+    if (confirm("¿Estás seguro de eliminar esta plaza de práctica? Esta acción no se puede deshacer.")) {
+      data.places = data.places.filter(p => p.id !== placeId);
+      audit(`Eliminó plaza de práctica ID #${placeId}`, "CONVENIO_PLAZA");
+      saveData();
+      toast("Plaza de práctica eliminada exitosamente.", "success");
+      render();
+    }
+    return;
+  }
+
   // Filtro de chips y tarjetas en la bandeja del Director
   const statusFilterBtn = event.target.closest('[data-status-filter]');
   if (statusFilterBtn) {

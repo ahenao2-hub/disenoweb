@@ -1975,3 +1975,18 @@ input[type="radio"] {
     display: none !important;
   }
 }
+
+
+/* --- Helper uppercase and badge styles --- */
+.text-uppercase {
+  text-transform: uppercase !important;
+}
+.bg-purple-subtle {
+  background-color: #f3e8ff !important;
+}
+.text-purple {
+  color: #7e22ce !important;
+}
+.border-purple {
+  border-color: #d8b4fe !important;
+}
