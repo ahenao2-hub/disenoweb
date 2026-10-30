@@ -22,9 +22,9 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: Verdana, Arial, Calibri, sans-serif;
-  font-size: 13px;
-  line-height: 1.45;
+  font-family: Arial, Verdana, Calibri, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 button,
@@ -49,6 +49,14 @@ h3 {
   font-size: 15px;
   font-weight: 600;
   color: #1f2937;
+}
+
+/* Input/select/textarea base legible */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea {
+  font-family: Arial, Verdana, Calibri, sans-serif;
+  font-size: 15px;
 }
 
 select.form-select {
@@ -2151,58 +2159,134 @@ input[type="radio"] {
 }
 
 /* ==========================================================================
-   MEJORAS DE ACCESIBILIDAD, CONTRASTE Y TIPOGRAFIA (SOLICITADAS)
-   - Tipografía principal Sans-Serif: Verdana, Arial, Calibri, sans-serif
-   - Escala: Títulos 18px, Subtítulos 15px, Demás contenido 13px
-   - Letra negra de alto contraste en zonas con color (métrica, badges, chips)
-   - Aprovechamiento amplio del espacio del Dashboard en pantalla (max-width fluido)
+   MEJORAS DE ACCESIBILIDAD, CONTRASTE Y TIPOGRAFIA — VERSIÓN CORREGIDA
+   - Fuente Sans-Serif: Arial, Verdana, Calibri en todo el sitio
+   - Escala: Títulos h1/h2 = 18px, Subtítulos h3 = 14-15px, Cuerpo = 14-15px
+   - Inputs/Textboxes: 15px, min-height 44px, padding generoso
+   - Dashboard: métricas grandes (30px), contenido ampliado
+   - Bordes amarillos reemplazados por relleno sólido impactante
+   - Filtros: texto 14px en negrita, íconos equilibrados
+   - Responsive: unidades relativas, sin desbordamiento horizontal
    ========================================================================== */
 
-/* 1. Fuente Sans-Serif universal y legible */
-html, body, button, input, select, textarea, table, .badge, .btn {
-  font-family: Verdana, Arial, Calibri, sans-serif !important;
+/* ─── 1. FUENTE SANS-SERIF GLOBAL ─────────────────────────────────────────── */
+html, body,
+h1, h2, h3, h4, h5, h6,
+button, input, select, textarea,
+table, td, th, label, p, span, a, li,
+.badge, .btn, .form-control, .form-select,
+.nav button, .modal, .modal-title {
+  font-family: Arial, Verdana, Calibri, sans-serif !important;
 }
 
-/* 2. Escala tipográfica exacta */
+/* ─── 2. ESCALA TIPOGRÁFICA ───────────────────────────────────────────────── */
+/* Títulos principales: 18px negrita */
 h1, .h1, .topbar h1, .modal-title, .brand strong {
   font-size: 18px !important;
   font-weight: 700 !important;
-  line-height: 1.35 !important;
+  line-height: 1.3 !important;
   color: #111827 !important;
 }
 
 h2, .h2, .card h2, .section-title, .card-title {
   font-size: 18px !important;
   font-weight: 700 !important;
-  line-height: 1.35 !important;
+  line-height: 1.3 !important;
   color: #111827 !important;
 }
 
-h3, .h3, .subtitle, .card h3, .section-subtitle, .card-subtitle, p.subtitle {
+/* Subtítulos: 14-15px */
+h3, .h3, .subtitle, .card h3,
+.section-subtitle, .card-subtitle, p.subtitle {
   font-size: 15px !important;
   font-weight: 600 !important;
   line-height: 1.4 !important;
   color: #1f2937 !important;
 }
 
-/* Demás contenido a 13px */
-body, p, span, a, input, select, textarea, button, td, th, label, .table, .form-control, .form-select, .btn, .nav button {
-  font-size: 13px;
-  line-height: 1.5;
+/* ─── 3. CUERPO GENERAL: 14px mínimo ─────────────────────────────────────── */
+body {
+  font-size: large !important;  /* escala relativa del navegador */
+  line-height: 1.55;
 }
 
-/* 3. Expansión del Dashboard y uso del espacio */
+p, span, a, td, th, label,
+.table, .nav button {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Textos secundarios: nunca menos de 13.5px */
+small, .small,
+.text-muted, .text-muted.small,
+div.text-muted.small, .muted {
+  font-size: 13.5px !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+}
+
+/* ─── 4. INPUTS / TEXTBOXES ──────────────────────────────────────────────── */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea,
+.form-control,
+.form-select {
+  font-family: Arial, Verdana, Calibri, sans-serif !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  color: #111827 !important;
+  min-height: 44px;
+  padding: 10px 14px !important;
+  border-radius: 6px;
+}
+
+textarea {
+  min-height: 96px;
+}
+
+/* Etiquetas de campos */
+label {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  margin-bottom: 4px;
+}
+
+/* Placeholders legibles */
+::placeholder {
+  color: #9ca3af !important;
+  font-size: 14px !important;
+  opacity: 1;
+}
+
+/* ─── 5. BOTONES ─────────────────────────────────────────────────────────── */
+button, .btn {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+
+/* ─── 6. DASHBOARD EXPANDIDO ─────────────────────────────────────────────── */
 .content {
   width: 100% !important;
-  max-width: 1680px !important;
+  max-width: 1700px !important;
   margin: 0 auto;
+  padding: 28px clamp(16px, 3vw, 40px) 48px !important;
 }
 
 .card.full {
   width: 100% !important;
 }
 
-/* 4. Letra negra y alto contraste en métricas y zonas de color */
+/* Tarjetas métricas del dashboard más grandes */
+.metric {
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  color: #111827 !important;
+}
+
 .card h2.text-warning,
 .card h2.text-success,
 .card h2.text-primary,
@@ -2213,95 +2297,64 @@ body, p, span, a, input, select, textarea, button, td, th, label, .table, .form-
 .metric.text-success,
 .metric.text-danger {
   color: #111827 !important;
-  font-weight: 700 !important;
-  font-size: 26px !important;
+  font-weight: 800 !important;
+  font-size: 30px !important;
 }
 
-/* Títulos de las tarjetas métricas en negro nítido */
+/* Etiquetas de tarjetas métricas */
 .card .text-muted.text-uppercase,
 .card .small.text-uppercase {
-  color: #111827 !important;
+  color: #374151 !important;
   font-weight: 700 !important;
-  font-size: 13px !important;
-  letter-spacing: 0.3px !important;
+  font-size: 13.5px !important;
+  letter-spacing: 0.5px !important;
 }
 
-/* Badges con texto negro de alto contraste sobre fondos de color */
-.badge.bg-warning,
-.badge.bg-warning-subtle,
-.badge-warning,
-.tag.warn {
-  background-color: #fef08a !important;
-  color: #000000 !important;
-  border: 1px solid #ca8a04 !important;
-  font-weight: 700 !important;
+/* Padding interno de tarjetas del dashboard */
+.grid > .card {
+  padding: 22px 24px !important;
 }
 
-.badge.bg-info,
-.badge.bg-info-subtle,
-.badge-info {
-  background-color: #bae6fd !important;
-  color: #000000 !important;
-  border: 1px solid #0284c7 !important;
-  font-weight: 700 !important;
+/* ─── 7. TARJETAS DE ESTADO KPI — RELLENO SÓLIDO IMPACTANTE ─────────────── */
+/* Fondo de color suave + borde izquierdo grueso (SIN caja gruesa en todos los lados) */
+/* Las tarjetas KPI usan inline-style border-left, así que solo necesitamos
+   anular los lados top/right/bottom que Bootstrap border-4 pinta gruesos */
+
+/* Tarjeta activa seleccionada: sombra de selección */
+.kpi-active {
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.25), 0 4px 16px rgba(0,0,0,0.12) !important;
+  transform: translateY(-2px);
 }
 
-.badge.bg-success,
-.badge.bg-success-subtle,
-.badge-success,
-.tag.ok {
-  background-color: #bbf7d0 !important;
-  color: #052e16 !important;
-  border: 1px solid #16a34a !important;
+/* Botón "Pendientes" en chips de filtro: fondo ámbar sólido, texto blanco negrita */
+#director-status-chips .btn-warning,
+#director-status-chips .btn-warning.active {
+  background-color: #d97706 !important;
+  border-color: #b45309 !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
 }
 
-.badge.bg-danger,
-.badge.bg-danger-subtle,
-.badge-danger,
-.tag.bad {
-  background-color: #fecaca !important;
-  color: #450a0a !important;
-  border: 1px solid #dc2626 !important;
+#director-status-chips .btn-info,
+#director-status-chips .btn-info.active {
+  background-color: #0284c7 !important;
+  border-color: #0369a1 !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
 }
 
-.badge.bg-primary,
-.badge.bg-primary-subtle {
-  background-color: #bfdbfe !important;
-  color: #000000 !important;
-  border: 1px solid #2563eb !important;
-  font-weight: 700 !important;
-}
-
-.badge.bg-secondary,
-.badge.bg-secondary-subtle {
-  background-color: #e2e8f0 !important;
-  color: #0f172a !important;
-  border: 1px solid #94a3b8 !important;
-  font-weight: 600 !important;
-}
-
-/* Chips de filtro rápido por estado con texto negro legible */
+/* ─── 8. CHIPS DE FILTRO — TEXTO PRIORITARIO SOBRE ÍCONO ────────────────── */
 #director-status-chips .btn,
 .status-filter-chip {
-  font-size: 13px !important;
-  font-weight: 600 !important;
+  font-family: Arial, Verdana, Calibri, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
   color: #111827 !important;
-}
-
-#director-status-chips .btn-warning {
-  background-color: #fef08a !important;
-  border-color: #ca8a04 !important;
-  color: #000000 !important;
-  font-weight: 700 !important;
-}
-
-#director-status-chips .btn-info {
-  background-color: #bae6fd !important;
-  border-color: #0284c7 !important;
-  color: #000000 !important;
-  font-weight: 700 !important;
+  padding: 6px 14px !important;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 #director-status-chips .btn-outline-warning,
@@ -2311,8 +2364,9 @@ body, p, span, a, input, select, textarea, button, td, th, label, .table, .form-
 #director-status-chips .btn-outline-danger,
 #director-status-chips .btn-outline-secondary {
   color: #111827 !important;
-  border-color: #94a3b8 !important;
+  border-color: #6b7280 !important;
   background-color: #ffffff !important;
+  font-weight: 600 !important;
 }
 
 #director-status-chips .btn-outline-warning:hover,
@@ -2325,36 +2379,19 @@ body, p, span, a, input, select, textarea, button, td, th, label, .table, .form-
   color: #000000 !important;
 }
 
-/* ==========================================================================
-   MEJORAS ADICIONALES DE LEGIBILIDAD, LOGIN AMPLIADO Y BOTÓN CERRAR SESIÓN
-   ========================================================================== */
-
-/* Botón Cerrar Sesión en la barra superior */
-.topbar [data-action="logout"] {
-  color: #dc2626 !important;
-  background-color: #fef2f2 !important;
-  border: 1.5px solid #f87171 !important;
-  transition: all 0.15s ease-in-out;
-}
-.topbar [data-action="logout"]:hover {
-  background-color: #dc2626 !important;
-  color: #ffffff !important;
-  border-color: #dc2626 !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+/* Chips de filtro en otras vistas (plazas, auditoría) */
+.d-flex .btn.btn-sm[data-status-filter],
+.d-flex .btn.btn-sm[data-entity-filter] {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  padding: 5px 13px !important;
 }
 
-/* Evitar letras diminutas en textos secundarios (mínimo 13.5px - 14px) */
-small, .small, .text-muted.small, div.text-muted.small {
-  font-size: 13.5px !important;
-  color: #374151 !important;
-  font-weight: 500 !important;
-  line-height: 1.4 !important;
-}
-
-/* Tabla de solicitudes y tablas generales */
+/* ─── 9. TABLAS ──────────────────────────────────────────────────────────── */
 table.table {
   font-size: 14px !important;
+  width: 100% !important;
 }
 
 table.table thead th {
@@ -2370,11 +2407,10 @@ table.table thead th {
 table.table tbody td {
   font-size: 14px !important;
   color: #111827 !important;
-  padding: 12px 14px !important;
+  padding: 11px 14px !important;
   vertical-align: middle !important;
 }
 
-/* Enlaces de soportes (Matrícula, EPS/ARL, Paz y Salvo) */
 table.table button[data-action="preview-doc"] {
   font-size: 13.5px !important;
   font-weight: 600 !important;
@@ -2386,30 +2422,202 @@ table.table button[data-action="preview-doc"]:hover {
   color: #1d4ed8 !important;
 }
 
-/* Botón de acción en la tabla (Ver Detalle / Evaluar) */
 table.table button[data-action="open-review-modal"] {
-  font-size: 13.5px !important;
+  font-size: 14px !important;
   font-weight: 700 !important;
   padding: 6px 14px !important;
   border-radius: 6px !important;
 }
 
-/* Badges con mayor tamaño y legibilidad */
+/* ─── 10. BADGES ─────────────────────────────────────────────────────────── */
 .badge {
   font-size: 13px !important;
   font-weight: 700 !important;
-  padding: 6px 12px !important;
+  padding: 5px 11px !important;
   letter-spacing: 0.3px !important;
 }
 
-/* Barra de búsqueda de la tabla */
-.table-search-bar input {
-  font-size: 14px !important;
-  min-height: 40px !important;
-  padding: 8px 14px !important;
+.badge.bg-warning, .badge.bg-warning-subtle, .badge-warning, .tag.warn {
+  background-color: #fde68a !important;
+  color: #78350f !important;
+  border: 1.5px solid #d97706 !important;
+  font-weight: 700 !important;
 }
 
-/* Login amplio para pantallas de escritorio */
+.badge.bg-info, .badge.bg-info-subtle, .badge-info {
+  background-color: #bae6fd !important;
+  color: #0c4a6e !important;
+  border: 1.5px solid #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-success, .badge.bg-success-subtle, .badge-success, .tag.ok {
+  background-color: #bbf7d0 !important;
+  color: #052e16 !important;
+  border: 1.5px solid #16a34a !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-danger, .badge.bg-danger-subtle, .badge-danger, .tag.bad {
+  background-color: #fecaca !important;
+  color: #450a0a !important;
+  border: 1.5px solid #dc2626 !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-primary, .badge.bg-primary-subtle {
+  background-color: #bfdbfe !important;
+  color: #1e3a5f !important;
+  border: 1.5px solid #2563eb !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-secondary, .badge.bg-secondary-subtle {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1.5px solid #64748b !important;
+  font-weight: 600 !important;
+}
+
+/* ─── 11. BARRA DE BÚSQUEDA ──────────────────────────────────────────────── */
+.table-search-bar input {
+  font-size: 15px !important;
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  color: #111827 !important;
+}
+
+/* ─── 12. BOTÓN CERRAR SESIÓN ────────────────────────────────────────────── */
+.topbar [data-action="logout"] {
+  color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+  border: 1.5px solid #f87171 !important;
+  transition: all 0.15s ease-in-out;
+}
+.topbar [data-action="logout"]:hover {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+/* ─── 13. RESPONSIVE MÓVIL — UNIDADES RELATIVAS, SIN DESBORDAMIENTO ──────── */
+
+/* Tablas con scroll horizontal suave en móvil */
+.table-wrap, .table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* Evitar que el contenido principal se desborde */
+.content, section, article,
+.form-grid, .workflow-form, .stack {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Neutraliza el border-4 de Bootstrap en cards de estado para que solo
+   el borde izquierdo sea grueso (evita caja gruesa en todos los lados) */
+.card[style*="border-left"] {
+  border-top: 1px solid var(--line) !important;
+  border-right: 1px solid var(--line) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+@media (max-width: 768px) {
+  /* Fuente relativa que escala con el viewport */
+  body {
+    font-size: medium !important;
+  }
+
+  p, span, td, th, label, a, li {
+    font-size: 14px !important;
+  }
+
+  h1, h2 {
+    font-size: clamp(16px, 4.5vw, 18px) !important;
+  }
+
+  h3 {
+    font-size: clamp(14px, 3.5vw, 15px) !important;
+  }
+
+  /* Inputs accesibles en móvil */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea,
+  .form-control,
+  .form-select {
+    font-size: 16px !important; /* evita zoom automático en iOS */
+    min-height: 48px !important;
+    padding: 12px 14px !important;
+  }
+
+  /* Formularios en columna única */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cards y grid a una columna */
+  .grid,
+  .report-box {
+    grid-template-columns: 1fr !important;
+  }
+
+  .card,
+  .card.wide,
+  .card.full {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Contenido con padding lateral suficiente */
+  .content {
+    padding: 16px 14px 32px !important;
+  }
+
+  /* Botones de filtro: texto completo sin recorte */
+  #director-status-chips {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  #director-status-chips .btn,
+  .d-flex .btn.btn-sm[data-status-filter] {
+    font-size: 13.5px !important;
+    padding: 6px 10px !important;
+    min-height: 36px;
+  }
+
+  /* Barra topbar en móvil */
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1, h2 {
+    font-size: clamp(15px, 5vw, 18px) !important;
+  }
+
+  h3 {
+    font-size: 14px !important;
+  }
+
+  .badge {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+
+  .metric {
+    font-size: 26px !important;
+  }
+}
+
+/* ─── 14. LOGIN AMPLIO PARA ESCRITORIO ───────────────────────────────────── */
 @media (min-width: 769px) {
   .login-card {
     width: min(1080px, 94vw) !important;
@@ -2420,6 +2628,7 @@ table.table button[data-action="open-review-modal"] {
     min-height: 580px !important;
   }
 }
+
 /* Fin de estilos */
-.eof-marker { display: none;
-}
+.eof-marker { display: none; }
+

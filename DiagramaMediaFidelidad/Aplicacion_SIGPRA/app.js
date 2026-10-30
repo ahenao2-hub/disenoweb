@@ -831,8 +831,9 @@ function renderLogin() {
                 <input class="form-control" name="name" type="text" placeholder="Ej: Camilo Andrés Pérez" required />
               </label>
 
-              <label class="full-field">Correo institucional UDI *
+              <label class="full-field">Correo institucional UDI (@udi.edu.co) *
                 <input class="form-control" name="email" type="email" placeholder="estudiante@udi.edu.co" required />
+                <small class="text-muted d-block mt-1">Ingrese su cuenta de correo institucional asignada por la universidad.</small>
               </label>
 
               <div class="row g-2 w-100 m-0">
@@ -893,8 +894,9 @@ function renderLogin() {
                   <span id="login-preview-role" class="muted">${escapeHtml(roleLabel(defaultUser?.role || ""))}</span>
                 </div>
               </div>
-              <label class="full-field">Correo
-                <input id="login-email" name="email" type="email" value="${escapeHtml(defaultUser?.email || "coordinador@udi.edu.co")}" required class="form-control" />
+              <label class="full-field">Correo electrónico institucional (@udi.edu.co) *
+                <input id="login-email" name="email" type="email" value="${escapeHtml(defaultUser?.email || "coordinador@udi.edu.co")}" placeholder="ejemplo@udi.edu.co" required class="form-control" />
+                <small class="text-muted d-block mt-1">Ingrese su cuenta de correo institucional asignada por la universidad.</small>
               </label>
               <label class="full-field">Clave
                 <input id="login-password" name="password" type="password" value="${escapeHtml(defaultUser?.password || "123456")}" required class="form-control" />
@@ -1314,9 +1316,14 @@ function renderAssignments() {
           <strong class="d-block text-primary">Gestión de Asignaciones y Docentes Tutores</strong>
           <small class="text-muted">Vincula estudiantes habilitados con plazas institucionales y docentes asesores.</small>
         </div>
-        <button class="btn btn-sm btn-success fw-bold shadow-sm" type="button" data-action="open-new-teacher-modal">
-          ➕ Registrar Nuevo Docente Asesor
-        </button>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-primary fw-bold shadow-sm" type="button" data-modal="place" title="Registrar una nueva plaza institucional directamente">
+            ➕ Registrar Nueva Plaza
+          </button>
+          <button class="btn btn-sm btn-success fw-bold shadow-sm" type="button" data-action="open-new-teacher-modal" title="Registrar un nuevo docente asesor">
+            ➕ Registrar Nuevo Docente Asesor
+          </button>
+        </div>
       </div>
       ${assignmentWorkflowForm()}
       <details class="assignment-history">
@@ -1385,7 +1392,12 @@ function assignmentWorkflowForm() {
         </div>
       </article>
       <article class="card full assignment-step" id="assignment-step-place" hidden>
-        <h2><span class="step-number">2</span> Plaza de practica</h2>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <h2 class="mb-0"><span class="step-number">2</span> Plaza de practica</h2>
+          <button class="btn btn-sm btn-outline-primary fw-bold py-1 px-3 shadow-sm" type="button" data-modal="place" title="Registrar nueva plaza institucional directamente">
+            ➕ Crear Plaza aquí
+          </button>
+        </div>
         <p class="muted">Solo se muestran plazas con cupo disponible y convenio vigente.</p>
         <label class="full-field">Plaza disponible
           <select class="form-select" name="placeId" ${availablePlaces.length ? "" : "disabled"}>
@@ -1397,11 +1409,25 @@ function assignmentWorkflowForm() {
             }).join("")}
           </select>
         </label>
-        ${availablePlaces.length ? "" : `<div class="empty full-field">No hay plazas con cupos disponibles y convenios vigentes para este periodo.</div>`}
+        ${availablePlaces.length ? "" : `
+          <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 mt-2 border border-warning rounded">
+            <div>
+              <strong>⚠️ No hay plazas disponibles:</strong> No se encontraron cupos vigentes para este periodo.
+            </div>
+            <button class="btn btn-sm btn-primary fw-bold" type="button" data-modal="place">
+              ➕ Registrar Nueva Plaza ahora
+            </button>
+          </div>
+        `}
         <div class="full-field" id="assignment-place-details" hidden></div>
       </article>
       <article class="card full assignment-step" id="assignment-step-teacher" hidden>
-        <h2><span class="step-number">3</span> Docente asesor</h2>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <h2 class="mb-0"><span class="step-number">3</span> Docente asesor</h2>
+          <button class="btn btn-sm btn-outline-success fw-bold py-1 px-3 shadow-sm" type="button" data-action="open-new-teacher-modal" title="Registrar un nuevo docente asesor directamente">
+            ➕ Crear Docente aquí
+          </button>
+        </div>
         <p class="muted">Selecciona un docente con disponibilidad en el periodo.</p>
         <label class="full-field">Docente asesor disponible
           <select class="form-select" name="teacherId" ${availableTeachers.length ? "" : "disabled"}>
@@ -4210,38 +4236,38 @@ function renderDirectorRequests(user) {
       <!-- Tarjetas de metricas rapidas interactivas -->
       <div class="row g-3">
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-warning shadow-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'ring-2 ring-warning' : ''}" data-status-filter="PENDIENTE_REVISION" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar pendientes" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Pendientes de Revisión</span>
-            <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${pending.length}</h2>
-              <span class="fs-4">⏳</span>
+          <div class="card p-3 shadow-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'kpi-active' : ''}" data-status-filter="PENDIENTE_REVISION" style="cursor:pointer;transition:transform 0.15s ease;border-left:5px solid #d97706;background-color:#fef3c7;" title="Clic para filtrar pendientes" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <span class="text-uppercase fw-bold d-block" style="font-size:13.5px;letter-spacing:0.3px;color:#92400e;">Pendientes de Revisión</span>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <h2 class="mb-0 fw-bold" style="font-size:30px;color:#78350f;">${pending.length}</h2>
+              <span style="font-size:1.5rem;">⏳</span>
             </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-success shadow-sm ${directorStatusFilter === 'APROBADA' ? 'ring-2 ring-success' : ''}" data-status-filter="APROBADA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar aprobadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Aprobadas (Habilitados)</span>
-            <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${approved.length}</h2>
-              <span class="fs-4">✅</span>
+          <div class="card p-3 shadow-sm ${directorStatusFilter === 'APROBADA' ? 'kpi-active' : ''}" data-status-filter="APROBADA" style="cursor:pointer;transition:transform 0.15s ease;border-left:5px solid #16a34a;background-color:#dcfce7;" title="Clic para filtrar aprobadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <span class="text-uppercase fw-bold d-block" style="font-size:13.5px;letter-spacing:0.3px;color:#14532d;">Aprobadas (Habilitados)</span>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <h2 class="mb-0 fw-bold" style="font-size:30px;color:#14532d;">${approved.length}</h2>
+              <span style="font-size:1.5rem;">✅</span>
             </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-primary shadow-sm ${directorStatusFilter === 'DEVUELTA' ? 'ring-2 ring-primary' : ''}" data-status-filter="DEVUELTA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar devueltas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Devueltas p/ corrección</span>
-            <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${returned.length}</h2>
-              <span class="fs-4">↩️</span>
+          <div class="card p-3 shadow-sm ${directorStatusFilter === 'DEVUELTA' ? 'kpi-active' : ''}" data-status-filter="DEVUELTA" style="cursor:pointer;transition:transform 0.15s ease;border-left:5px solid #2563eb;background-color:#dbeafe;" title="Clic para filtrar devueltas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <span class="text-uppercase fw-bold d-block" style="font-size:13.5px;letter-spacing:0.3px;color:#1e3a8a;">Devueltas p/ corrección</span>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <h2 class="mb-0 fw-bold" style="font-size:30px;color:#1e3a8a;">${returned.length}</h2>
+              <span style="font-size:1.5rem;">↩️</span>
             </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card p-3 border-start border-4 border-danger shadow-sm ${directorStatusFilter === 'RECHAZADA' ? 'ring-2 ring-danger' : ''}" data-status-filter="RECHAZADA" style="cursor: pointer; transition: transform 0.15s ease;" title="Clic para filtrar rechazadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <span class="text-dark small text-uppercase fw-bold" style="font-size: 13px; letter-spacing: 0.3px;">Rechazadas</span>
-            <div class="d-flex justify-content-between align-items-center mt-1">
-              <h2 class="mb-0 text-dark fw-bold" style="font-size: 26px;">${rejected.length}</h2>
-              <span class="fs-4">❌</span>
+          <div class="card p-3 shadow-sm ${directorStatusFilter === 'RECHAZADA' ? 'kpi-active' : ''}" data-status-filter="RECHAZADA" style="cursor:pointer;transition:transform 0.15s ease;border-left:5px solid #dc2626;background-color:#fee2e2;" title="Clic para filtrar rechazadas" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <span class="text-uppercase fw-bold d-block" style="font-size:13.5px;letter-spacing:0.3px;color:#7f1d1d;">Rechazadas</span>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <h2 class="mb-0 fw-bold" style="font-size:30px;color:#7f1d1d;">${rejected.length}</h2>
+              <span style="font-size:1.5rem;">❌</span>
             </div>
           </div>
         </div>
@@ -4262,12 +4288,20 @@ function renderDirectorRequests(user) {
 
         <!-- Chips de Filtro Rápido por Estado Interactivos -->
         <div class="d-flex align-items-center gap-2 flex-wrap mb-3" id="director-status-chips">
-          <span class="text-dark fw-bold" style="font-size: 13px;">Filtrar por:</span>
-          <button class="btn btn-sm ${directorStatusFilter === 'ALL' ? 'btn-dark active text-white fw-bold' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="ALL" style="font-size: 13px;">Todos (${requests.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'btn-warning active text-dark fw-bold border border-warning' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="PENDIENTE_REVISION" style="font-size: 13px;">⏳ Pendientes (${pending.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'APROBADA' ? 'btn-success active text-white fw-bold' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="APROBADA" style="font-size: 13px;">✅ Aprobadas (${approved.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'DEVUELTA' ? 'btn-info active text-dark fw-bold border border-info' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="DEVUELTA" style="font-size: 13px;">↩️ Devueltas (${returned.length})</button>
-          <button class="btn btn-sm ${directorStatusFilter === 'RECHAZADA' ? 'btn-danger active text-white fw-bold' : 'btn-outline-secondary text-dark fw-semibold'} py-1 px-3" data-status-filter="RECHAZADA" style="font-size: 13px;">❌ Rechazadas (${rejected.length})</button>
+          <span class="text-dark fw-bold" style="font-size: 14px;">Filtrar por:</span>
+          <button class="btn btn-sm ${directorStatusFilter === 'ALL' ? 'btn-dark active text-white fw-bold' : 'btn-outline-secondary text-dark fw-semibold'} py-1.5 px-3" data-status-filter="ALL" style="font-size: 14px;">Todos (${requests.length})</button>
+          <button class="btn btn-sm ${directorStatusFilter === 'PENDIENTE_REVISION' ? 'btn-warning active text-white fw-bold shadow-sm' : 'btn-outline-secondary text-dark fw-semibold'} py-1.5 px-3" data-status-filter="PENDIENTE_REVISION" style="font-size: 14px;">
+            <span>⏳</span> <span class="ms-1">Pendientes (${pending.length})</span>
+          </button>
+          <button class="btn btn-sm ${directorStatusFilter === 'APROBADA' ? 'btn-success active text-white fw-bold shadow-sm' : 'btn-outline-secondary text-dark fw-semibold'} py-1.5 px-3" data-status-filter="APROBADA" style="font-size: 14px;">
+            <span>✅</span> <span class="ms-1">Aprobadas (${approved.length})</span>
+          </button>
+          <button class="btn btn-sm ${directorStatusFilter === 'DEVUELTA' ? 'btn-info active text-dark fw-bold shadow-sm' : 'btn-outline-secondary text-dark fw-semibold'} py-1.5 px-3" data-status-filter="DEVUELTA" style="font-size: 14px;">
+            <span>↩️</span> <span class="ms-1">Devueltas (${returned.length})</span>
+          </button>
+          <button class="btn btn-sm ${directorStatusFilter === 'RECHAZADA' ? 'btn-danger active text-white fw-bold shadow-sm' : 'btn-outline-secondary text-dark fw-semibold'} py-1.5 px-3" data-status-filter="RECHAZADA" style="font-size: 14px;">
+            <span>❌</span> <span class="ms-1">Rechazadas (${rejected.length})</span>
+          </button>
         </div>
 
         <div class="table-wrap table-responsive">
