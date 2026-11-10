@@ -1,3 +1,7 @@
+[x-cloak] {
+  display: none !important;
+}
+
 :root {
   --bg: #eef2f5;
   --panel: #ffffff;
@@ -552,6 +556,10 @@ textarea {
   .report-box {
     grid-template-columns: 1fr;
   }
+}
+
+[x-cloak] {
+  display: none !important;
 }
 
 :root {

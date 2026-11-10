@@ -4630,37 +4630,35 @@ function renderNotificationBell(user) {
   const unreadCount = notifs.filter(n => !readNotifIds.has(n.id)).length;
 
   return `
-    <div class="notification-wrapper">
-      <button class="notification-bell-btn shadow-sm" type="button" data-action="toggle-notifications" aria-label="Centro de Notificaciones" title="Centro de Notificaciones">
+    <div class="notification-wrapper" x-data="{ open: false }" @click.outside="open = false" style="position: relative;">
+      <button class="notification-bell-btn shadow-sm" type="button" @click="open = !open" aria-label="Centro de Notificaciones" title="Centro de Notificaciones">
         🔔 ${unreadCount > 0 ? `<span class="notification-badge">${unreadCount}</span>` : ''}
       </button>
 
-      ${notificationsOpen ? `
-        <div class="notification-dropdown" id="notification-dropdown-menu">
-          <div class="notification-header">
-            <strong class="small text-dark">🔔 Notificaciones (${notifs.length})</strong>
-            ${unreadCount > 0 ? `
-              <button class="btn btn-link p-0 text-decoration-none small text-primary" data-action="mark-all-notifications-read">
-                Marcar leídas
-              </button>
-            ` : '<span class="small text-muted">Al día</span>'}
-          </div>
-          <ul class="notification-list">
-            ${notifs.length === 0 ? `
-              <li class="p-3 text-center text-muted small">No tienes notificaciones pendientes.</li>
-            ` : notifs.map(n => `
-              <li class="notification-item ${readNotifIds.has(n.id) ? '' : 'unread'}" data-action="click-notification" data-id="${n.id}" data-view="${n.actionView}">
-                <span class="notif-icon">${n.icon}</span>
-                <div class="w-100">
-                  <div class="notif-title">${escapeHtml(n.title)}</div>
-                  <div class="notif-desc">${escapeHtml(n.desc)}</div>
-                  <div class="notif-time">${escapeHtml(n.time)}</div>
-                </div>
-              </li>
-            `).join('')}
-          </ul>
+      <div class="notification-dropdown" id="notification-dropdown-menu" x-show="open" x-cloak x-transition.opacity.duration.150ms>
+        <div class="notification-header">
+          <strong class="small text-dark">🔔 Notificaciones (${notifs.length})</strong>
+          ${unreadCount > 0 ? `
+            <button class="btn btn-link p-0 text-decoration-none small text-primary" data-action="mark-all-notifications-read">
+              Marcar leídas
+            </button>
+          ` : '<span class="small text-muted">Al día</span>'}
         </div>
-      ` : ''}
+        <ul class="notification-list">
+          ${notifs.length === 0 ? `
+            <li class="p-3 text-center text-muted small">No tienes notificaciones pendientes.</li>
+          ` : notifs.map(n => `
+            <li class="notification-item ${readNotifIds.has(n.id) ? '' : 'unread'}" data-action="click-notification" data-id="${n.id}" data-view="${n.actionView}">
+              <span class="notif-icon">${n.icon}</span>
+              <div class="w-100">
+                <div class="notif-title">${escapeHtml(n.title)}</div>
+                <div class="notif-desc">${escapeHtml(n.desc)}</div>
+                <div class="notif-time">${escapeHtml(n.time)}</div>
+              </div>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
     </div>
   `;
 }
