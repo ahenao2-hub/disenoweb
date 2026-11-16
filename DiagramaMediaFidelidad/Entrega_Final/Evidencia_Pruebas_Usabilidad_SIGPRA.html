@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SIGPRA - Evidencia de Pruebas de Usabilidad</title>
+  <style>
+    @page {
+      size: letter portrait;
+      margin: 18mm 18mm 18mm 18mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      color: #1e293b;
+      background: #ffffff;
+      font-size: 11pt;
+      line-height: 1.45;
+    }
+    .header {
+      border-bottom: 2.5px solid #1e3a8a;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .header-left h1 {
+      font-size: 15pt;
+      color: #1e3a8a;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.3px;
+    }
+    .header-left h2 {
+      font-size: 11pt;
+      color: #475569;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .header-right {
+      text-align: right;
+      font-size: 9pt;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .badge-20 {
+      background: #1e3a8a;
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 9pt;
+      font-weight: 800;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .section-title {
+      font-size: 11.5pt;
+      font-weight: 800;
+      color: #1e3a8a;
+      text-transform: uppercase;
+      border-left: 4px solid #2563eb;
+      padding-left: 8px;
+      margin: 16px 0 8px 0;
+      letter-spacing: 0.2px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .card-info {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 9.5pt;
+    }
+    .card-info strong {
+      color: #0f172a;
+    }
+    .table-custom {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 9pt;
+    }
+    .table-custom th {
+      background: #f1f5f9;
+      color: #1e293b;
+      text-align: left;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      font-weight: 700;
+    }
+    .table-custom td {
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    .table-custom tr:nth-child(even) {
+      background: #fafafa;
+    }
+    .tag-ok {
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 8pt;
+      display: inline-block;
+    }
+    .tag-medio {
+      background: #fef3c7;
+      color: #b45309;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 8pt;
+      display: inline-block;
+    }
+    .tag-bajo {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 8pt;
+      display: inline-block;
+    }
+    .quote-box {
+      background: #eff6ff;
+      border: 1.5px dashed #3b82f6;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 9.5pt;
+      color: #1e3a8a;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-note {
+      margin-top: 16px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+      font-size: 8pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <span class="badge-20">EVALUACIÓN PRÁCTICA SEGUNDO PARCIAL (20%)</span>
+      <h1>Universidad de Investigación y Desarrollo — UDI</h1>
+      <h2>SIGPRA · Evidencia de Pruebas de Usabilidad y Estrategia de Mitigación</h2>
+    </div>
+    <div class="header-right">
+      <strong>Ingeniería de Sistemas</strong><br>
+      Diseño Web · Semestre V · 2026-II<br>
+      Bucaramanga, Colombia
+    </div>
+  </header>
+
+  <!-- SECCIÓN 1: FICHA TÉCNICA -->
+  <div class="section-title">1. Ficha Técnica de la Sesión de Usabilidad</div>
+  <div class="grid-2">
+    <div class="card-info">
+      <p><strong>Tipo de Prueba:</strong> Prueba moderada con observación directa y registro manual.</p>
+      <p><strong>Objetivo:</strong> Evaluar autonomía de usuarios externos, identificar bloqueos en flujos de casos de uso y verificar consistencia de validaciones.</p>
+      <p><strong>Soporte Físico:</strong> Hoja de registro diligenciada a mano y firmada (<code>SesionPruebas.pdf</code>).</p>
+    </div>
+    <div class="card-info">
+      <p><strong>Equipo de Desarrollo (Observadores):</strong><br>
+      Jesús Daniel Rueda Castillo · Alonso Andrés Henao Roa · Rafael Fabián Carreño Barrera</p>
+      <p><strong>Evaluadores Externos (Sin conocimiento del código):</strong><br>
+      1. Andrés José Felipe Antolínez Soto<br>
+      2. Juan Fernando Tapias Arias<br>
+      3. José Raúl Gutiérrez Serrano</p>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: MATRIZ DE HALLAZGOS -->
+  <div class="section-title">2. Matriz Consolidada de Hallazgos Registrados</div>
+  <table class="table-custom">
+    <thead>
+      <tr>
+        <th style="width: 10%;">ID</th>
+        <th style="width: 12%;">Caso</th>
+        <th style="width: 48%;">Descripción del Hallazgo</th>
+        <th style="width: 12%;">Impacto</th>
+        <th style="width: 18%;">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>H-00</strong></td>
+        <td>CU-01</td>
+        <td>El evaluador no identificó al inicio el botón de guardar.</td>
+        <td><span class="tag-bajo">Bajo</span></td>
+        <td><span class="tag-ok">ACLARADO</span> (El formulario sí tiene <em>Guardar borrador</em>; evaluador corrigió).</td>
+      </tr>
+      <tr>
+        <td><strong>H-01</strong></td>
+        <td>CU-01</td>
+        <td>El sistema permitía publicar periodos con intensidad horaria superior a la capacidad del rango de fechas (ej. 245 hrs en 10 días).</td>
+        <td><span class="tag-medio">Medio</span></td>
+        <td><span class="tag-ok">CORREGIDO</span> (Cálculo algorítmico y tope de 320h reglamentarias).</td>
+      </tr>
+      <tr>
+        <td><strong>H-02</strong></td>
+        <td>CU-01</td>
+        <td>Aviso estático amarillo de advertencia se mostraba de forma fija y repetía el mensaje de suma de rúbrica al 100%.</td>
+        <td><span class="tag-bajo">Bajo</span></td>
+        <td><span class="tag-ok">CORREGIDO</span> (Totalizador reactivo en vivo; solo alerta en error).</td>
+      </tr>
+      <tr>
+        <td><strong>H-03</strong></td>
+        <td>CU-04 / CU-08</td>
+        <td>La interfaz indicaba límite de 10 MB, pero el área de arrastrar y soltar de solicitud no bloqueaba archivos mayores.</td>
+        <td><span class="tag-bajo">Bajo</span></td>
+        <td><span class="tag-ok">CORREGIDO</span> (Validador unificado de tamaño y formato en todos los inputs).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECCIÓN 3: ESTRATEGIAS DE CORRECCIÓN Y MITIGACIÓN -->
+  <div class="section-title">3. Estrategias de Corrección y Mitigación Aplicadas</div>
+  <div style="font-size: 9.5pt; line-height: 1.5; margin-bottom: 10px;">
+    <p style="margin-bottom: 8px;"><strong>• Corrección H-01 (Capacidad Temporal y Límite de Horas):</strong> Se implementó la fórmula algorítmica: <em>Capacidad Teórica = [(Fecha Fin − Fecha Inicio) + 1] × 24 hrs</em>. Si la intensidad horaria mínima excede esta capacidad o sobrepasa el marco legal de 320 horas, el botón de publicación queda inhabilitado con advertencia explicativa.</p>
+    <p style="margin-bottom: 8px;"><strong>• Corrección H-02 (Rúbricas Ponderadas Reactivas):</strong> Se sustituyeron los textos estáticos por un totalizador interactivo en tiempo real que suma los pesos (40% + 30% + 30%). Se unificó el código visual: ámbar para advertencias pedagógicas no bloqueantes y rojo para errores bloqueantes.</p>
+    <p style="margin-bottom: 8px;"><strong>• Corrección H-03 (Límite Estricto de 10 MB):</strong> Se estandarizó la función de verificación en frontend para extensiones permitidas (.pdf, .jpg, .png, .docx) y límite de 10 MB, respaldada en el servidor Express con retorno <em>HTTP 413 (Payload Too Large)</em>.</p>
+  </div>
+
+  <!-- SECCIÓN 4: MEJORAS ADICIONALES DE USABILIDAD -->
+  <div class="section-title">4. Mejoras Adicionales de Usabilidad en Repositorio Git</div>
+  <table class="table-custom">
+    <thead>
+      <tr>
+        <th style="width: 15%;">Commit</th>
+        <th style="width: 18%;">Módulo / Caso</th>
+        <th style="width: 67%;">Optimización Implementada</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>25fab69</code></td>
+        <td>CU-02, CU-05, Audit</td>
+        <td>Botón directo <strong>➕ Registrar Nueva Plaza</strong>; panel de decisión docente en color (Aprobar/Devolver/Rechazar); buscador reactivo y exportación CSV en auditoría.</td>
+      </tr>
+      <tr>
+        <td><code>ae24118</code></td>
+        <td>CU-04 (Bitácora)</td>
+        <td>Botones de guardado permanente visibles; regla de negocio estricta de 24 horas máximas por jornada diaria.</td>
+      </tr>
+      <tr>
+        <td><code>fe1196f</code></td>
+        <td>CU-08 (Carta UDI)</td>
+        <td>Calibración CSS <code>@media print</code> para que la Carta Oficial UDI imprima en <strong>1 sola página perfecta</strong> con membrete institucional y firmas legales.</td>
+      </tr>
+      <tr>
+        <td><code>e9f430f</code></td>
+        <td>CU-08 (Mockups)</td>
+        <td>Consolidación de dashboards de mediana fidelidad (CU-08.png) y bocetos de baja fidelidad para los 8 casos de uso completos.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECCIÓN 5: VEREDICTO DE LOS EVALUADORES -->
+  <div class="quote-box">
+    <div>
+      <strong>Dictamen Cualitativo de los Evaluadores (Registro Físico):</strong><br>
+      <em>"Está muy bacana la página que hicieron, mis respetos, casi no tiene errores."</em>
+    </div>
+    <div style="text-align: right;">
+      <span class="tag-ok" style="font-size: 9pt;">100% TAREAS COMPLETADAS</span><br>
+      <small style="color: #64748b;">0 fallas críticas</small>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer-note">
+    <span>Proyecto SIGPRA · Repositorio: <code>https://github.com/ahenao2-hub/disenoweb</code></span>
+    <span>Soporte original: <code>DiagramaMediaFidelidad/SesionPruebas.pdf</code></span>
+  </footer>
+
+</body>
+</html>
